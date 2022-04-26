@@ -1,7 +1,7 @@
 # Проект «Киноман»
 
 * Студент: [Иван Жарков](https://up.htmlacademy.ru/ecmascript/17/user/191422).
-* Наставник: `Неизвестно`.
+* Наставник: [Семён Якушев](https://htmlacademy.ru/profile/id1118791).
 
 ---
 
