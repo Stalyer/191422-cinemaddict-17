@@ -1,5 +1,5 @@
 import FilmsView from '../view/films-view.js';
-import FilmsListPresenter from './films-list-presenter.js';
+import FilmsListView from '../view/films-list-view.js';
 import {render} from '../render.js';
 
 const FILMS_COUNT = {
@@ -15,20 +15,27 @@ export default class FilmsPresenter {
     this.filmsContainer = filmsContainer;
 
     render(this.filmsComponent, this.filmsContainer);
-    const filmsListMainComponent = new FilmsListPresenter();
-    const filmsListRatingComponent = new FilmsListPresenter();
-    const filmsListCommentedComponent = new FilmsListPresenter();
+    const filmsListMainComponent = new FilmsListView();
+    const filmsListRatingComponent = new FilmsListView();
+    const filmsListCommentedComponent = new FilmsListView();
 
-    filmsListMainComponent.init(this.filmsComponent.getElement(), FILMS_COUNT.main, true);
-    filmsListMainComponent.addTitleText('All movies. Upcoming');
+    filmsListMainComponent.getElement();
+    filmsListMainComponent.setTitle('All movies. Upcoming');
     filmsListMainComponent.setTitleAdittionClass('visually-hidden');
+    filmsListMainComponent.addFilmsCards(FILMS_COUNT.main);
+    filmsListMainComponent.addShowMore();
+    render(filmsListMainComponent, this.filmsComponent.getElement());
 
-    filmsListRatingComponent.init(this.filmsComponent.getElement(), FILMS_COUNT.rating);
-    filmsListRatingComponent.addTitleText('Top rated');
-    filmsListRatingComponent.setListAdittionClass('films-list--extra');
+    filmsListRatingComponent.getElement();
+    filmsListRatingComponent.setTitle('Top rated');
+    filmsListRatingComponent.setSectionAdittionClass('films-list--extra');
+    filmsListRatingComponent.addFilmsCards(FILMS_COUNT.rating);
+    render(filmsListRatingComponent, this.filmsComponent.getElement());
 
-    filmsListCommentedComponent.init(this.filmsComponent.getElement(), FILMS_COUNT.commented);
-    filmsListCommentedComponent.addTitleText('Most commented');
-    filmsListCommentedComponent.setListAdittionClass('films-list--extra');
+    filmsListCommentedComponent.getElement();
+    filmsListCommentedComponent.setTitle('Most commented');
+    filmsListCommentedComponent.setSectionAdittionClass('films-list--extra');
+    filmsListCommentedComponent.addFilmsCards(FILMS_COUNT.commented);
+    render(filmsListCommentedComponent, this.filmsComponent.getElement());
   };
 }

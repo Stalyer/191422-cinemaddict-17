@@ -15,7 +15,7 @@ export default class FilmsListTitleView {
     return this.element;
   }
 
-  addText(text) {
+  setText(text) {
     this.element.textContent = text;
   }
 
