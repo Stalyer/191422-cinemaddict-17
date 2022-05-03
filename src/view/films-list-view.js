@@ -1,44 +1,58 @@
-import FilmsListTitleView from './films-list-title-view.js';
-import FilmsListContainerView from './films-list-container-view.js';
 import FilmCardView from './film-card-view.js';
 import ShowMoreView from './show-more-view.js';
 import {createElement, render} from '../render.js';
 
-const createFilmsListTemplate = () => '<section class="films-list"></section>';
+const SECTION_CLASS = {
+  common: {
+    titleAdittionClass: ' visually-hidden',
+    sectionAdittionClass: '',
+  },
+  extra: {
+    titleAdittionClass: '',
+    sectionAdittionClass: ' films-list--extra',
+  }
+};
+
+const createFilmsListTemplate = (sectionSettings) => {
+  const {typeSection, title} = sectionSettings;
+  const {titleAdittionClass, sectionAdittionClass} = SECTION_CLASS[typeSection];
+
+  return `<section class="films-list${sectionAdittionClass}">
+            <h2 class="films-list__title${titleAdittionClass}">${title}</h2>
+            <div class="films-list__container"></div>
+          </section>`;
+};
 
 export default class FilmsListView {
-  filmsListTitleComponent = new FilmsListTitleView();
-  filmsListContainerComponent = new FilmsListContainerView();
+  constructor(sectionSettings) {
+    this.sectionSettings = sectionSettings;
+    this.cardCount = sectionSettings.cardCount;
+    this.showMore = sectionSettings.showMore;
+  }
 
   _getTemplate() {
-    return createFilmsListTemplate();
+    return createFilmsListTemplate(this.sectionSettings);
   }
 
   getElement() {
     if (!this.element) {
       this.element = createElement(this._getTemplate());
-      render(this.filmsListTitleComponent, this.element);
-      render(this.filmsListContainerComponent, this.element);
+
+      if (this.cardCount) {
+        this.addFilmsCards(this.cardCount);
+      }
+
+      if (this.showMore) {
+        this.addShowMore();
+      }
     }
 
     return this.element;
   }
 
-  setSectionAdittionClass(adittionClass) {
-    this.element.classList.add(adittionClass);
-  }
-
-  setTitle(text) {
-    this.filmsListTitleComponent.setText(text);
-  }
-
-  setTitleAdittionClass(adittionClass) {
-    this.filmsListTitleComponent.setAdittionClass(adittionClass);
-  }
-
   addFilmsCards(cardCount) {
     for (let i = 0; i < cardCount; i++) {
-      render(new FilmCardView(), this.filmsListContainerComponent.getElement());
+      render(new FilmCardView(), this.element.querySelector('.films-list__container'));
     }
   }
 
