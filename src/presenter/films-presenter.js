@@ -11,31 +11,18 @@ const FILMS_COUNT = {
 export default class FilmsPresenter {
   filmsComponent = new FilmsView();
 
-  init = (filmsContainer) => {
+  init = (filmsContainer, filmsModel) => {
     this.filmsContainer = filmsContainer;
+    this.filmsModel = filmsModel;
+    this.filmsItems = [...this.filmsModel.getFilms()];
+
+    const filmsListMainComponent = new FilmsListView({typeSection: 'common', title: 'All movies. Upcoming', filmsItems: this.filmsItems, cardCount: FILMS_COUNT.main, showMore: true});
+    const filmsListRatingComponent = new FilmsListView({typeSection: 'extra', title: 'Top rated', filmsItems: this.filmsItems, cardCount: FILMS_COUNT.rating, showMore: false});
+    const filmsListCommentedComponent = new FilmsListView({typeSection: 'extra', title: 'Most commented', filmsItems: this.filmsItems, cardCount: FILMS_COUNT.commented, showMore: false});
 
     render(this.filmsComponent, this.filmsContainer);
-    const filmsListMainComponent = new FilmsListView();
-    const filmsListRatingComponent = new FilmsListView();
-    const filmsListCommentedComponent = new FilmsListView();
-
-    filmsListMainComponent.getElement();
-    filmsListMainComponent.setTitle('All movies. Upcoming');
-    filmsListMainComponent.setTitleAdittionClass('visually-hidden');
-    filmsListMainComponent.addFilmsCards(FILMS_COUNT.main);
-    filmsListMainComponent.addShowMore();
     render(filmsListMainComponent, this.filmsComponent.getElement());
-
-    filmsListRatingComponent.getElement();
-    filmsListRatingComponent.setTitle('Top rated');
-    filmsListRatingComponent.setSectionAdittionClass('films-list--extra');
-    filmsListRatingComponent.addFilmsCards(FILMS_COUNT.rating);
     render(filmsListRatingComponent, this.filmsComponent.getElement());
-
-    filmsListCommentedComponent.getElement();
-    filmsListCommentedComponent.setTitle('Most commented');
-    filmsListCommentedComponent.setSectionAdittionClass('films-list--extra');
-    filmsListCommentedComponent.addFilmsCards(FILMS_COUNT.commented);
     render(filmsListCommentedComponent, this.filmsComponent.getElement());
   };
 }
