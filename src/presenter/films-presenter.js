@@ -11,11 +11,14 @@ const FILMS_COUNT = {
 export default class FilmsPresenter {
   filmsComponent = new FilmsView();
 
-  init = (filmsContainer) => {
+  init = (filmsContainer, filmsModel) => {
     this.filmsContainer = filmsContainer;
-    const filmsListMainComponent = new FilmsListView({typeSection: 'common', title: 'All movies. Upcoming', cardCount: FILMS_COUNT.main, showMore: true});
-    const filmsListRatingComponent = new FilmsListView({typeSection: 'extra', title: 'Top rated', cardCount: FILMS_COUNT.rating, showMore: false});
-    const filmsListCommentedComponent = new FilmsListView({typeSection: 'extra', title: 'Most commented', cardCount: FILMS_COUNT.commented, showMore: false});
+    this.filmsModel = filmsModel;
+    this.filmsItems = [...this.filmsModel.getFilms()];
+
+    const filmsListMainComponent = new FilmsListView({typeSection: 'common', title: 'All movies. Upcoming', filmsItems: this.filmsItems, cardCount: FILMS_COUNT.main, showMore: true});
+    const filmsListRatingComponent = new FilmsListView({typeSection: 'extra', title: 'Top rated', filmsItems: this.filmsItems, cardCount: FILMS_COUNT.rating, showMore: false});
+    const filmsListCommentedComponent = new FilmsListView({typeSection: 'extra', title: 'Most commented', filmsItems: this.filmsItems, cardCount: FILMS_COUNT.commented, showMore: false});
 
     render(this.filmsComponent, this.filmsContainer);
     render(filmsListMainComponent, this.filmsComponent.getElement());

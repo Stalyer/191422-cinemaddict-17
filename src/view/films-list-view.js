@@ -26,6 +26,7 @@ const createFilmsListTemplate = (sectionSettings) => {
 export default class FilmsListView {
   constructor(sectionSettings) {
     this.sectionSettings = sectionSettings;
+    this.filmsItems = sectionSettings.filmsItems;
     this.cardCount = sectionSettings.cardCount;
     this.showMore = sectionSettings.showMore;
   }
@@ -38,8 +39,8 @@ export default class FilmsListView {
     if (!this.element) {
       this.element = createElement(this._getTemplate());
 
-      if (this.cardCount) {
-        this.addFilmsCards(this.cardCount);
+      if (this.filmsItems && this.cardCount) {
+        this.addFilmsCards(this.filmsItems, this.cardCount);
       }
 
       if (this.showMore) {
@@ -50,9 +51,13 @@ export default class FilmsListView {
     return this.element;
   }
 
-  addFilmsCards(cardCount) {
+  addFilmsCards(films, cardCount) {
     for (let i = 0; i < cardCount; i++) {
-      render(new FilmCardView(), this.element.querySelector('.films-list__container'));
+      if (films[i]) {
+        render(new FilmCardView(films[i]), this.element.querySelector('.films-list__container'));
+      } else {
+        break;
+      }
     }
   }
 
