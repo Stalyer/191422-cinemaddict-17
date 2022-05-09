@@ -11,38 +11,43 @@ const createCommentListTemplate = (commentsCount) => (
 );
 
 export default class CommentListView {
+  #element = null;
+  #commentsIds = null;
+  #comments = [];
+  #commentsCount = null;
+
   constructor(commentsIds, comments) {
-    this.commentsIds = commentsIds;
-    this.comments = comments;
-    this.commentsCount = commentsIds.length;
+    this.#commentsIds = commentsIds;
+    this.#comments = comments;
+    this.#commentsCount = commentsIds.length;
   }
 
-  _getTemplate() {
-    return createCommentListTemplate(this.commentsCount);
+  get template() {
+    return createCommentListTemplate(this.#commentsCount);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this._getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template);
 
-      if (this.commentsIds) {
-        this.addCommentsCards(this.commentsIds, this.comments);
+      if (this.#commentsIds) {
+        this.addCommentsCards(this.#commentsIds, this.#comments);
       }
 
-      render(new NewCommentView(), this.element);
+      render(new NewCommentView(), this.#element);
     }
 
-    return this.element;
+    return this.#element;
   }
 
   addCommentsCards(commentsIds, comments) {
     const someComments = comments.filter((comment) => commentsIds.includes(comment.id));
     someComments.forEach((comment) => {
-      render(new CommentView(comment), this.element.querySelector('.film-details__comments-list'));
+      render(new CommentView(comment), this.#element.querySelector('.film-details__comments-list'));
     });
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }
