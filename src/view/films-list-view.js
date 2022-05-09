@@ -1,4 +1,4 @@
-import FilmCardView from './film-card-view.js';
+// import FilmCardView from './film-card-view.js';
 import ShowMoreView from './show-more-view.js';
 import {createElement, render} from '../render.js';
 
@@ -26,14 +26,14 @@ const createFilmsListTemplate = (sectionSettings) => {
 export default class FilmsListView {
   #element = null;
   #sectionSettings = null;
-  #filmsItems = [];
-  #cardCount = null;
+  // #filmsItems = [];
+  // #cardCount = null;
   #showMore = null;
 
   constructor(sectionSettings) {
     this.#sectionSettings = sectionSettings;
-    this.#filmsItems = sectionSettings.filmsItems;
-    this.#cardCount = sectionSettings.cardCount;
+    // this.#filmsItems = sectionSettings.filmsItems;
+    // this.#cardCount = sectionSettings.cardCount;
     this.#showMore = sectionSettings.showMore;
   }
 
@@ -45,9 +45,9 @@ export default class FilmsListView {
     if (!this.#element) {
       this.#element = createElement(this.template);
 
-      if (this.#filmsItems && this.#cardCount) {
-        this.addFilmsCards(this.#filmsItems, this.#cardCount);
-      }
+      // if (this.#filmsItems && this.#cardCount) {
+      //   this.addFilmsCards(this.#filmsItems, this.#cardCount);
+      // }
 
       if (this.#showMore) {
         this.addShowMore();
@@ -57,15 +57,19 @@ export default class FilmsListView {
     return this.#element;
   }
 
-  addFilmsCards(films, cardCount) {
-    for (let i = 0; i < cardCount; i++) {
-      if (films[i]) {
-        render(new FilmCardView(films[i]), this.#element.querySelector('.films-list__container'));
-      } else {
-        break;
-      }
-    }
+  get containerNode() {
+    return this.element.querySelector('.films-list__container');
   }
+
+  // addFilmsCards(films, cardCount) {
+  //   for (let i = 0; i < cardCount; i++) {
+  //     if (films[i]) {
+  //       render(new FilmCardView(films[i]), this.#element.querySelector('.films-list__container'));
+  //     } else {
+  //       break;
+  //     }
+  //   }
+  // }
 
   addShowMore() {
     render(new ShowMoreView(), this.#element);

@@ -121,6 +121,10 @@ export default class FilmDetailsView {
     return this.#element;
   }
 
+  get closeBtnNode() {
+    return this.element.querySelector('.film-details__close-btn');
+  }
+
   addComments(commentsIds, comments) {
     render(new CommentListView(commentsIds, comments), this.#element.querySelector('.film-details__bottom-container'));
   }

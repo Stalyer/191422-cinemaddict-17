@@ -20,6 +20,6 @@ const filmsModel = new FilmsModel();
 render(new ProfileView, siteHeaderNode);
 render(new MainNavigationView, siteMainNode);
 render(new SortView, siteMainNode);
-filmsPresenter.init(siteMainNode, filmsModel);
+filmsPresenter.init(siteMainNode, siteBodyNode, filmsModel);
 // filmDetailsPresenter.init(siteBodyNode, filmsModel);
 render(new StatisticsView, footerStatisticsNode);

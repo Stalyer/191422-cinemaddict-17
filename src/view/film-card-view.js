@@ -50,6 +50,10 @@ export default class FilmCardView {
     return this.#element;
   }
 
+  get linkNode() {
+    return this.element.querySelector('.film-card__link');
+  }
+
   removeElement() {
     this.#element = null;
   }
