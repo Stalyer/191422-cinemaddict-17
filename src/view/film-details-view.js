@@ -94,33 +94,42 @@ const createFilmDetailsTemplate = (film) => {
 };
 
 export default class FilmDetailsView {
+  #element = null;
+  #film = null;
+  #filmCommentsIds = null;
+  #commentsItems = [];
+
   constructor(film, comments) {
-    this.film = film;
-    this.filmCommentsIds = this.film.comments;
-    this.commentsItems = comments;
+    this.#film = film;
+    this.#filmCommentsIds = this.#film.comments;
+    this.#commentsItems = comments;
   }
 
-  _getTemplate() {
-    return createFilmDetailsTemplate(this.film);
+  get template() {
+    return createFilmDetailsTemplate(this.#film);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this._getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template);
 
-      if (this.filmCommentsIds) {
-        this.addComments(this.filmCommentsIds, this.commentsItems);
+      if (this.#filmCommentsIds) {
+        this.addComments(this.#filmCommentsIds, this.#commentsItems);
       }
     }
 
-    return this.element;
+    return this.#element;
+  }
+
+  get closeBtnNode() {
+    return this.element.querySelector('.film-details__close-btn');
   }
 
   addComments(commentsIds, comments) {
-    render(new CommentListView(commentsIds, comments), this.element.querySelector('.film-details__bottom-container'));
+    render(new CommentListView(commentsIds, comments), this.#element.querySelector('.film-details__bottom-container'));
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }

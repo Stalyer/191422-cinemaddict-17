@@ -21,23 +21,26 @@ const createCommentTemplate = (comment) => (
 );
 
 export default class CommentView {
+  #element = null;
+  #comment = null;
+
   constructor(comment) {
-    this.comment = comment;
+    this.#comment = comment;
   }
 
-  _getTemplate() {
-    return createCommentTemplate(this.comment);
+  get template() {
+    return createCommentTemplate(this.#comment);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this._getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template);
     }
 
-    return this.element;
+    return this.#element;
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }
