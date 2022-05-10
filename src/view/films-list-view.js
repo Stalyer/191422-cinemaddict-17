@@ -1,6 +1,5 @@
-// import FilmCardView from './film-card-view.js';
-import ShowMoreView from './show-more-view.js';
-import {createElement, render} from '../render.js';
+// import ShowMoreView from './show-more-view.js';
+import {createElement} from '../render.js';
 
 const SECTION_CLASS = {
   common: {
@@ -10,6 +9,10 @@ const SECTION_CLASS = {
   extra: {
     titleAdittionClass: '',
     sectionAdittionClass: ' films-list--extra',
+  },
+  empty: {
+    titleAdittionClass: '',
+    sectionAdittionClass: '',
   }
 };
 
@@ -26,15 +29,9 @@ const createFilmsListTemplate = (sectionSettings) => {
 export default class FilmsListView {
   #element = null;
   #sectionSettings = null;
-  // #filmsItems = [];
-  // #cardCount = null;
-  #showMore = null;
 
   constructor(sectionSettings) {
     this.#sectionSettings = sectionSettings;
-    // this.#filmsItems = sectionSettings.filmsItems;
-    // this.#cardCount = sectionSettings.cardCount;
-    this.#showMore = sectionSettings.showMore;
   }
 
   get template() {
@@ -44,14 +41,6 @@ export default class FilmsListView {
   get element() {
     if (!this.#element) {
       this.#element = createElement(this.template);
-
-      // if (this.#filmsItems && this.#cardCount) {
-      //   this.addFilmsCards(this.#filmsItems, this.#cardCount);
-      // }
-
-      if (this.#showMore) {
-        this.addShowMore();
-      }
     }
 
     return this.#element;
@@ -59,20 +48,6 @@ export default class FilmsListView {
 
   get containerNode() {
     return this.element.querySelector('.films-list__container');
-  }
-
-  // addFilmsCards(films, cardCount) {
-  //   for (let i = 0; i < cardCount; i++) {
-  //     if (films[i]) {
-  //       render(new FilmCardView(films[i]), this.#element.querySelector('.films-list__container'));
-  //     } else {
-  //       break;
-  //     }
-  //   }
-  // }
-
-  addShowMore() {
-    render(new ShowMoreView(), this.#element);
   }
 
   removeElement() {
