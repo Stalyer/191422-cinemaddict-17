@@ -1,5 +1,4 @@
-// import ShowMoreView from './show-more-view.js';
-import {createElement} from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
 const SECTION_CLASS = {
   common: {
@@ -26,11 +25,11 @@ const createFilmsListTemplate = (sectionSettings) => {
           </section>`;
 };
 
-export default class FilmsListView {
-  #element = null;
+export default class FilmsListView extends AbstractView {
   #sectionSettings = null;
 
   constructor(sectionSettings) {
+    super();
     this.#sectionSettings = sectionSettings;
   }
 
@@ -38,19 +37,7 @@ export default class FilmsListView {
     return createFilmsListTemplate(this.#sectionSettings);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
-  }
-
   get containerNode() {
     return this.element.querySelector('.films-list__container');
-  }
-
-  removeElement() {
-    this.#element = null;
   }
 }

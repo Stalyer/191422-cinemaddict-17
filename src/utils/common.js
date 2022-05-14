@@ -12,13 +12,5 @@ const getRandomFloat = (a, b, decimal = 1) => {
 
 const getRandomArrayElement = (elements) => elements[getRandomInteger(0, elements.length - 1)];
 
-const converterMinutesToDuration = (time) => {
-  let duration = '';
-  const hours = Math.trunc(time / 60);
-  const minutes = time % 60;
-  duration += hours ? `${hours}h ` : '';
-  duration += minutes ? `${minutes}m` : '';
-  return duration;
-};
 
-export {getRandomInteger, getRandomFloat, getRandomArrayElement, converterMinutesToDuration};
+export {getRandomInteger, getRandomFloat, getRandomArrayElement};

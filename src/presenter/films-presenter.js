@@ -1,10 +1,10 @@
+import {render, remove} from '../framework/render.js';
 import FilmsView from '../view/films-view.js';
 import FilmsListView from '../view/films-list-view.js';
 import FilmCardView from '../view/film-card-view.js';
 import FilmDetailsView from '../view/film-details-view.js';
 import ShowMoreView from '../view/show-more-view.js';
 import SortView from '../view/sort-view.js';
-import {render} from '../render.js';
 
 const FILMS_COUNT = {
   main: 5,
@@ -48,7 +48,7 @@ export default class FilmsPresenter {
 
       if (this.#filmsItems.length > FILM_COUNT_PER_STEP) {
         render(this.#showMoreViewComponent, this.#filmsListMainComponent.element);
-        this.#showMoreViewComponent.element.addEventListener('click', this.#onShowMoreButtonClick);
+        this.#showMoreViewComponent.setOnClick(this.#onShowMoreButtonClick);
       }
 
       render(this.#SortViewComponent, this.#filmsContainer);
@@ -83,8 +83,8 @@ export default class FilmsPresenter {
 
     filmComponent.linkNode.addEventListener('click', () => {
       if(this.#filmDetailsComponent) {
-        this.#filmDetailsComponent.element.remove();
-        this.#filmDetailsComponent.removeElement();
+        document.removeEventListener('keydown', this.#onEscKeyDown);
+        remove(this.#filmDetailsComponent);
       }
       openFilmDetails();
     });
@@ -96,38 +96,30 @@ export default class FilmsPresenter {
     this.#filmDetailsComponent = new FilmDetailsView(film, comments);
     this.#filmDetailsContainer.classList.add('hide-overflow');
 
-    const closeFilmDetails = () => {
-      this.#filmDetailsContainer.classList.remove('hide-overflow');
-      this.#filmDetailsComponent.element.remove();
-      this.#filmDetailsComponent.removeElement();
-    };
-
-    const onEscKeyDown = (evt) => {
-      if (evt.key === 'Escape' || evt.key === 'Esc') {
-        evt.preventDefault();
-        closeFilmDetails();
-        document.removeEventListener('keydown', onEscKeyDown);
-      }
-    };
-
-    this.#filmDetailsComponent.closeBtnNode.addEventListener('click', () => {
-      closeFilmDetails();
-    });
-
-    document.addEventListener('keydown', onEscKeyDown);
+    this.#filmDetailsComponent.setOnClickCloseBtn(this.#onCloseFilmDetails);
+    document.addEventListener('keydown', this.#onEscKeyDown);
 
     render(this.#filmDetailsComponent, this.#filmDetailsContainer);
   };
 
-  #onShowMoreButtonClick = (evt) => {
-    evt.preventDefault();
+  #onCloseFilmDetails = () => {
+    this.#filmDetailsContainer.classList.remove('hide-overflow');
+    remove(this.#filmDetailsComponent);
+  };
+
+  #onEscKeyDown = (evt) => {
+    if (evt.key === 'Escape' || evt.key === 'Esc') {
+      evt.preventDefault();
+      this.#onCloseFilmDetails();
+      document.removeEventListener('keydown', this.#onEscKeyDown);
+    }
+  };
+
+  #onShowMoreButtonClick = () => {
     this.#filmsItems.slice(this.#renderedFilmCount, this.#renderedFilmCount + FILM_COUNT_PER_STEP).forEach((film) => this.#renderFilm(film, this.#filmsListMainComponent.containerNode));
-
     this.#renderedFilmCount += FILM_COUNT_PER_STEP;
-
     if (this.#renderedFilmCount >= this.#filmsItems.length) {
-      this.#showMoreViewComponent.element.remove();
-      this.#showMoreViewComponent.removeElement();
+      remove(this.#showMoreViewComponent);
     }
   };
 }
