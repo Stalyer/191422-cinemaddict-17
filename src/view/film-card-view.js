@@ -1,6 +1,6 @@
-import {createElement} from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
 import dayjs from 'dayjs';
-import {converterMinutesToDuration} from '../utils.js';
+import {converterMinutesToDuration} from '../utils/film.js';
 
 const createFilmCardTemplate = (film) => {
   const {comments, filmInfo, userDetails} = film;
@@ -30,11 +30,11 @@ const createFilmCardTemplate = (film) => {
   </article>`;
 };
 
-export default class FilmCardView {
-  #element = null;
+export default class FilmCardView extends AbstractView {
   #film = null;
 
   constructor(film) {
+    super();
     this.#film = film;
   }
 
@@ -42,19 +42,7 @@ export default class FilmCardView {
     return createFilmCardTemplate(this.#film);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
-  }
-
   get linkNode() {
     return this.element.querySelector('.film-card__link');
-  }
-
-  removeElement() {
-    this.#element = null;
   }
 }

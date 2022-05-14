@@ -1,6 +1,7 @@
-import {createElement, render} from '../render.js';
+import AbstractView from '../framework/view/abstract-view.js';
+import {render} from '../framework/render.js';
 import dayjs from 'dayjs';
-import {converterMinutesToDuration} from '../utils.js';
+import {converterMinutesToDuration} from '../utils/film.js';
 import CommentListView from './comments-list-view.js';
 
 const createFilmDetailsTemplate = (film) => {
@@ -93,43 +94,38 @@ const createFilmDetailsTemplate = (film) => {
           </section>`;
 };
 
-export default class FilmDetailsView {
-  #element = null;
+export default class FilmDetailsView extends AbstractView {
   #film = null;
   #filmCommentsIds = null;
   #commentsItems = [];
 
   constructor(film, comments) {
+    super();
     this.#film = film;
     this.#filmCommentsIds = this.#film.comments;
     this.#commentsItems = comments;
+
+    if (this.#filmCommentsIds) {
+      this.addComments(this.#filmCommentsIds, this.#commentsItems);
+    }
   }
 
   get template() {
     return createFilmDetailsTemplate(this.#film);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
+  setOnClickCloseBtn = (callback) => {
+    this._callback.click = callback;
+    this.element.querySelector('.film-details__close-btn').addEventListener('click', this.#OnClickCloseBtn);
+  };
 
-      if (this.#filmCommentsIds) {
-        this.addComments(this.#filmCommentsIds, this.#commentsItems);
-      }
-    }
-
-    return this.#element;
-  }
-
-  get closeBtnNode() {
-    return this.element.querySelector('.film-details__close-btn');
-  }
+  #OnClickCloseBtn = (evt) => {
+    evt.preventDefault();
+    this._callback.click();
+  };
 
   addComments(commentsIds, comments) {
-    render(new CommentListView(commentsIds, comments), this.#element.querySelector('.film-details__bottom-container'));
+    render(new CommentListView(commentsIds, comments), this.element.querySelector('.film-details__bottom-container'));
   }
 
-  removeElement() {
-    this.#element = null;
-  }
 }
