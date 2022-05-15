@@ -32,7 +32,7 @@ const createNewCommentTemplate = () => (
   </div>`
 );
 
-export default class NewCommentView extends  AbstractView {
+export default class NewCommentView extends AbstractView {
   get template() {
     return createNewCommentTemplate();
   }

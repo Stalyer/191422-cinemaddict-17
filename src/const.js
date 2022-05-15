@@ -1,3 +1,11 @@
 const EMOTIONS = ['smile', 'sleeping', 'puke', 'angry'];
 
-export {EMOTIONS};
+const FilterType = {
+  ALL: 'All movies',
+  WATCHLIST: 'Watchlist',
+  HISTORY: 'History',
+  FAVORITES: 'Favorites',
+};
+
+
+export {EMOTIONS, FilterType};
