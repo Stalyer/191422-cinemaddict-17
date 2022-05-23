@@ -12,11 +12,11 @@ const siteMainNode = siteBodyNode.querySelector('.main');
 const siteFooterNode = siteBodyNode.querySelector('.footer');
 const footerStatisticsNode = siteFooterNode.querySelector('.footer__statistics');
 
-const filmsPresenter = new FilmsPresenter();
 const filmsModel = new FilmsModel();
 const filters = generateFilter(filmsModel.films);
+const filmsPresenter = new FilmsPresenter(siteMainNode, siteBodyNode, filmsModel);
 
 render(new ProfileView, siteHeaderNode);
 render(new MainNavigationView(filters), siteMainNode);
-filmsPresenter.init(siteMainNode, siteBodyNode, filmsModel);
+filmsPresenter.init();
 render(new StatisticsView(filmsModel.films.length), footerStatisticsNode);
