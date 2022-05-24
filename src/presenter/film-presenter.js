@@ -58,8 +58,9 @@ export default class FilmPresenter {
 
     if (this.#mode === Mode.DETAILS) {
       replace(this.#filmComponent, prevFilmComponent);
-      remove(prevfilmDetailsComponent);
       this.#renderFilmDetails(film, comments);
+      this.#filmDetailsComponent.element.scrollTo(0, prevfilmDetailsComponent.element.scrollTop);
+      remove(prevfilmDetailsComponent);
     }
 
     remove(prevFilmComponent);
