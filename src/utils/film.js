@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 const converterMinutesToDuration = (time) => {
   let duration = '';
   const hours = Math.trunc(time / 60);
@@ -7,5 +9,30 @@ const converterMinutesToDuration = (time) => {
   return duration;
 };
 
+const getWeightForNullDate = (dateA, dateB) => {
+  if (dateA === null && dateB === null) {
+    return 0;
+  }
 
-export {converterMinutesToDuration};
+  if (dateA === null) {
+    return 1;
+  }
+
+  if (dateB === null) {
+    return -1;
+  }
+
+  return null;
+};
+
+const sortFilmDate = (filmA, filmB) => {
+  const weight = getWeightForNullDate(filmA.filmInfo.release.date, filmB.filmInfo.release.date);
+
+  return weight ?? dayjs(filmB.filmInfo.release.date).diff(dayjs(filmA.filmInfo.release.date));
+};
+
+const sortFilmCommented = (filmA, filmB) => filmB.comments.length - filmA.comments.length;
+
+const sortFilmRated = (filmA, filmB) => filmB.filmInfo.totalRating - filmA.filmInfo.totalRating;
+
+export {converterMinutesToDuration, sortFilmDate, sortFilmCommented, sortFilmRated};
