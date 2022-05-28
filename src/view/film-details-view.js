@@ -1,8 +1,8 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import {render} from '../framework/render.js';
 import dayjs from 'dayjs';
 import {converterMinutesToDuration} from '../utils/film.js';
-import CommentListView from './comments-list-view.js';
+import CommentsView from './comments-view.js';
 
 const createFilmDetailsTemplate = (film) => {
   const {filmInfo, userDetails} = film;
@@ -94,24 +94,20 @@ const createFilmDetailsTemplate = (film) => {
           </section>`;
 };
 
-export default class FilmDetailsView extends AbstractView {
-  #film = null;
-  #filmCommentsIds = null;
-  #commentsItems = [];
+export default class FilmDetailsView extends AbstractStatefulView {
+  #commentsComponent = null;
+  #scrollTopElement = 0;
 
   constructor(film, comments) {
     super();
-    this.#film = film;
-    this.#filmCommentsIds = this.#film.comments;
-    this.#commentsItems = comments;
-
-    if (this.#filmCommentsIds) {
-      this.addComments(this.#filmCommentsIds, this.#commentsItems);
-    }
+    // this._state = FilmDetailsView.convertFilmToState(film);
+    this._state = film;
+    this.#commentsComponent = new CommentsView(comments);
+    this.#renderCommentsComponent();
   }
 
   get template() {
-    return createFilmDetailsTemplate(this.#film);
+    return createFilmDetailsTemplate(this._state);
   }
 
   setOnCloseBtnClick = (callback) => {
@@ -142,23 +138,50 @@ export default class FilmDetailsView extends AbstractView {
   #onWatchlistClick = (evt) => {
     evt.preventDefault();
     this._callback.watchlistClick();
-    evt.target.classList.toggle('film-details__control-button--active');
+    this.#scrollTopElement = this.element.scrollTop;
+    this.updateElement({...this._state, userDetails: {...this._state.userDetails, watchlist: !this._state.userDetails.watchlist}});
   };
 
   #onWatchedClick = (evt) => {
     evt.preventDefault();
     this._callback.watchedClick();
-    evt.target.classList.toggle('film-details__control-button--active');
+    this.#scrollTopElement = this.element.scrollTop;
+    this.updateElement({...this._state, userDetails: {...this._state.userDetails, alreadyWatched: !this._state.userDetails.alreadyWatched}});
   };
 
   #onFavoriteClick = (evt) => {
     evt.preventDefault();
     this._callback.favoriteClick();
-    evt.target.classList.toggle('film-details__control-button--active');
+    this.#scrollTopElement = this.element.scrollTop;
+    this.updateElement({...this._state, userDetails: {...this._state.userDetails, favorite: !this._state.userDetails.favorite}});
   };
 
-  addComments(commentsIds, comments) {
-    render(new CommentListView(commentsIds, comments), this.element.querySelector('.film-details__bottom-container'));
-  }
+  #renderCommentsComponent = () => {
+    render(this.#commentsComponent, this.element.querySelector('.film-details__bottom-container'));
+  };
+
+  _restoreHandlers = () => {
+    this.#renderCommentsComponent();
+    this.element.scrollTo(0, this.#scrollTopElement);
+    this.setOnCloseBtnClick(this._callback.click);
+    this.setOnWatchlistClick(this._callback.watchlistClick);
+    this.setOnWatchedClick(this._callback.watchedClick);
+    this.setOnFavoriteClick(this._callback.favoriteClick);
+  };
+
+  // static convertFilmToState = (film) => {
+  //   const state = {...film};
+  //   return state;
+  // };
+
+  // static convertStateToFilm = (state) => {
+  //   const film = {...state};
+  //   return film;
+  // };
+
+  reset = (film) => {
+    this.#scrollTopElement = this.element.scrollTop;
+    this.updateElement(film);
+  };
 
 }
