@@ -15,10 +15,10 @@ export default class FilmPresenter {
 
   #changeData = null;
   #changeMode = null;
+  #mode = Mode.DEFAULT;
 
   #film = null;
   #comments = null;
-  #mode = Mode.DEFAULT;
 
   constructor(filmListContainer, filmDetailsContainer, changeData, changeMode) {
     this.#filmListContainer = filmListContainer;
@@ -32,8 +32,6 @@ export default class FilmPresenter {
     this.#comments = comments;
 
     const prevFilmComponent = this.#filmComponent;
-    const prevfilmDetailsComponent = this.#filmDetailsComponent;
-
     this.#filmComponent = new FilmCardView(film);
 
     const openFilmDetails = () => {
@@ -52,34 +50,37 @@ export default class FilmPresenter {
       return;
     }
 
-    if (this.#mode === Mode.DEFAULT) {
-      replace(this.#filmComponent, prevFilmComponent);
-    }
-
-    if (this.#mode === Mode.DETAILS) {
-      replace(this.#filmComponent, prevFilmComponent);
-      this.#renderFilmDetails(film, comments);
-      this.#filmDetailsComponent.element.scrollTo(0, prevfilmDetailsComponent.element.scrollTop);
-      remove(prevfilmDetailsComponent);
-    }
-
+    replace(this.#filmComponent, prevFilmComponent);
     remove(prevFilmComponent);
   };
 
   #onWatchlistClick = () => {
-    this.#changeData({...this.#film, userDetails: {...this.#film.userDetails, watchlist: !this.#film.userDetails.watchlist}});
+    const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, watchlist: !this.#film.userDetails.watchlist}};
+    this.#changeData(filmUpdate);
+    if (this.#mode === Mode.DETAILS) {
+      this.#filmDetailsComponent.reset(filmUpdate);
+    }
   };
 
   #onWatchedClick = () => {
-    this.#changeData({...this.#film, userDetails: {...this.#film.userDetails, alreadyWatched: !this.#film.userDetails.alreadyWatched}});
+    const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, alreadyWatched: !this.#film.userDetails.alreadyWatched}};
+    this.#changeData(filmUpdate);
+    if (this.#mode === Mode.DETAILS) {
+      this.#filmDetailsComponent.reset(filmUpdate);
+    }
   };
 
   #onFavoriteClick = () => {
-    this.#changeData({...this.#film, userDetails: {...this.#film.userDetails, favorite: !this.#film.userDetails.favorite}});
+    const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, favorite: !this.#film.userDetails.favorite}};
+    this.#changeData(filmUpdate);
+    if (this.#mode === Mode.DETAILS) {
+      this.#filmDetailsComponent.reset(filmUpdate);
+    }
   };
 
   #renderFilmDetails = (film, comments) => {
-    this.#filmDetailsComponent = new FilmDetailsView(film, comments);
+    const someComments = comments.filter((comment) => film.comments.includes(comment.id));
+    this.#filmDetailsComponent = new FilmDetailsView(film, someComments);
     this.#filmDetailsContainer.classList.add('hide-overflow');
 
     this.#filmDetailsComponent.setOnCloseBtnClick(this.#onCloseFilmDetails);
