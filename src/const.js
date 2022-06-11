@@ -1,10 +1,10 @@
 const EMOTIONS = ['smile', 'sleeping', 'puke', 'angry'];
 
 const FilterType = {
-  ALL: 'All movies',
-  WATCHLIST: 'Watchlist',
-  HISTORY: 'History',
-  FAVORITES: 'Favorites',
+  ALL: 'all',
+  WATCHLIST: 'watchlist',
+  HISTORY: 'history',
+  FAVORITES: 'favorites',
 };
 
 const SortType = {
@@ -13,4 +13,16 @@ const SortType = {
   RATING: 'rating',
 };
 
-export {EMOTIONS, FilterType, SortType};
+const UserAction = {
+  UPDATE_USER_LIST_FILM: 'UPDATE_USER_LIST_FILM',
+  ADD_COMMENT: 'ADD_COMMENT',
+  DELETE_COMMENT: 'DELETE_COMMENT',
+};
+
+const UpdateType = {
+  PATCH: 'PATCH',
+  MINOR: 'MINOR',
+  MAJOR: 'MAJOR',
+};
+
+export {EMOTIONS, FilterType, SortType, UserAction, UpdateType};

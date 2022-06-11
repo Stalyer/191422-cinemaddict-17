@@ -21,7 +21,7 @@ const createFilmsListTemplate = (sectionSettings) => {
 
   return `<section class="films-list${sectionAdittionClass}">
             <h2 class="films-list__title${titleAdittionClass}">${title}</h2>
-            <div class="films-list__container"></div>
+            ${typeSection !== 'empty' ? '<div class="films-list__container"></div>' : ''}
           </section>`;
 };
 
