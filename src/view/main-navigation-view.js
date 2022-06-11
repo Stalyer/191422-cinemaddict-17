@@ -1,33 +1,55 @@
 import AbstractView from '../framework/view/abstract-view.js';
+import {FilterType} from '../const.js';
 
-const createNavigationTemplate = (filters) => {
+const createFilterItemTemplate = (filter, currentFilterType) => {
+  const {type, name, count} = filter;
 
-  const createFilters = () => {
-    let filtersTempalte = '';
+  return (
+    `<a
+      href="#${type}"
+      class="main-navigation__item${type === currentFilterType ? ' main-navigation__item--active' : ''}"
+      data-filter-type="${type}"
+      >
+        ${name}
+        ${type !== FilterType.ALL ? `<span class="main-navigation__item-count">${count}</span>` : ''}
+      </a>`
+  );
+};
 
-    filters.forEach((filter) => {
-      const {name, count} = filter;
-      filtersTempalte += `<a href="#${name.toLowerCase()}" class="main-navigation__item">${name} <span class="main-navigation__item-count">${count}</span></a>`;
-    });
-
-    return filtersTempalte;
-  };
+const createNavigationTemplate = (filterItems, currentFilterType) => {
+  const filterItemsTemplate = filterItems
+    .map((filter) => createFilterItemTemplate(filter, currentFilterType))
+    .join('');
 
   return `<nav class="main-navigation">
-            <a href="#all" class="main-navigation__item main-navigation__item--active">All movies</a>
-            ${createFilters()}
+            ${filterItemsTemplate}
           </nav>`;
 };
 
 export default class MainNavigationView extends AbstractView {
   #filters = null;
+  #currentFilterType = null;
 
-  constructor (filters) {
+  constructor (filters, currentFilterType) {
     super();
     this.#filters = filters;
+    this.#currentFilterType = currentFilterType;
   }
 
   get template() {
-    return createNavigationTemplate(this.#filters);
+    return createNavigationTemplate(this.#filters, this.#currentFilterType);
   }
+
+  setOnFilterTypeClick = (callback) => {
+    this._callback.filterTypeClick = callback;
+    this.element.addEventListener('click', this.#onfilterTypeClick);
+  };
+
+  #onfilterTypeClick = (evt) => {
+    if (evt.target.tagName !== 'A') {
+      return;
+    }
+    evt.preventDefault();
+    this._callback.filterTypeClick(evt.target.dataset.filterType);
+  };
 }

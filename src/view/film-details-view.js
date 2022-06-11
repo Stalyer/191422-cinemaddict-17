@@ -1,10 +1,11 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
-import {render} from '../framework/render.js';
 import dayjs from 'dayjs';
 import {converterMinutesToDuration} from '../utils/film.js';
-import CommentsView from './comments-view.js';
+import {EMOTIONS} from '../const.js';
+import he from 'he';
 
-const createFilmDetailsTemplate = (film) => {
+const createFilmDetailsTemplate = (filmItem) => {
+  const {film, commentsCount, newComment} = filmItem;
   const {filmInfo, userDetails} = film;
   const watchlistClassName = userDetails.watchlist ? ' film-details__control-button--active' : '';
   const alreadyWatchedClassName = userDetails.alreadyWatched ? ' film-details__control-button--active' : '';
@@ -16,6 +17,40 @@ const createFilmDetailsTemplate = (film) => {
       genresTempalte += `<span class="film-details__genre">${genre}</span>`;
     });
     return genresTempalte;
+  };
+
+  const createEmojiListTemplate = (currentEmotion) => EMOTIONS.map((emotion) => `<input
+    class="film-details__emoji-item visually-hidden"
+    name="comment-emoji"
+    type="radio"
+    id="emoji-${emotion}"
+    value="${emotion}"
+    ${currentEmotion === emotion ? 'checked' : ''}
+  >
+  <label
+    class="film-details__emoji-label"
+    for="emoji-${emotion}"
+    >
+    <img src="./images/emoji/${emotion}.png" width="30" height="30" alt="emoji">
+  </label>`).join('');
+
+  const createNewCommentTemplate = (newCommentItem) => {
+    const {emotion, comment} = newCommentItem;
+    const emojiImageTemplate = emotion ? `<img src="./images/emoji/${emotion}.png" width="55" height="55" alt="emoji-smile">` : '';
+    const userComment = comment ? comment : '';
+    const emojiListTemplate = createEmojiListTemplate(emotion);
+
+    return `<div class="film-details__new-comment">
+      <div class="film-details__add-emoji-label">${emojiImageTemplate}</div>
+
+      <label class="film-details__comment-label">
+        <textarea class="film-details__comment-input" placeholder="Select reaction below and write comment here" name="comment">${he.encode(userComment)}</textarea>
+      </label>
+
+      <div class="film-details__emoji-list">
+        ${emojiListTemplate}
+      </div>
+    </div>`;
   };
 
   return `<section class="film-details">
@@ -89,25 +124,38 @@ const createFilmDetailsTemplate = (film) => {
                 </section>
               </div>
 
-              <div class="film-details__bottom-container"></div>
+              <div class="film-details__bottom-container">
+                <section class="film-details__comments-wrap">
+                  <h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${commentsCount}</span></h3>
+                  ${commentsCount > 0 ? '<ul class="film-details__comments-list"></ul>' : ''}
+                  ${createNewCommentTemplate(newComment)}
+                </section>
+              </div>
             </form>
           </section>`;
 };
 
 export default class FilmDetailsView extends AbstractStatefulView {
-  #commentsComponent = null;
-  #scrollTopElement = 0;
-
-  constructor(film, comments) {
+  constructor(film, commentsCount) {
     super();
-    // this._state = FilmDetailsView.convertFilmToState(film);
-    this._state = film;
-    this.#commentsComponent = new CommentsView(comments);
-    this.#renderCommentsComponent();
+    this._state = FilmDetailsView.convertFilmToState(film, commentsCount);
+    this.#setOnInner();
   }
 
   get template() {
     return createFilmDetailsTemplate(this._state);
+  }
+
+  get commentsContainerNode() {
+    return this.element.querySelector('.film-details__comments-list');
+  }
+
+  get scrollPosition() {
+    return this.element.scrollTop;
+  }
+
+  set scrollPosition(value) {
+    this.element.scrollTo(0, value);
   }
 
   setOnCloseBtnClick = (callback) => {
@@ -130,6 +178,15 @@ export default class FilmDetailsView extends AbstractStatefulView {
     this.element.querySelector('.film-details__control-button--favorite').addEventListener('click', this.#onFavoriteClick);
   };
 
+  setOnNewCommentSend = (callback) => {
+    this._callback.newCommentSend = callback;
+    this.element.querySelector('.film-details__comment-input').addEventListener('keydown', this.#onCommentUserSend);
+  };
+
+  setOnRenderComment = (callback) => {
+    this._callback.renderComments = callback;
+  };
+
   #onCloseBtnClick = (evt) => {
     evt.preventDefault();
     this._callback.click();
@@ -138,50 +195,59 @@ export default class FilmDetailsView extends AbstractStatefulView {
   #onWatchlistClick = (evt) => {
     evt.preventDefault();
     this._callback.watchlistClick();
-    this.#scrollTopElement = this.element.scrollTop;
-    this.updateElement({...this._state, userDetails: {...this._state.userDetails, watchlist: !this._state.userDetails.watchlist}});
   };
 
   #onWatchedClick = (evt) => {
     evt.preventDefault();
     this._callback.watchedClick();
-    this.#scrollTopElement = this.element.scrollTop;
-    this.updateElement({...this._state, userDetails: {...this._state.userDetails, alreadyWatched: !this._state.userDetails.alreadyWatched}});
   };
 
   #onFavoriteClick = (evt) => {
     evt.preventDefault();
     this._callback.favoriteClick();
-    this.#scrollTopElement = this.element.scrollTop;
-    this.updateElement({...this._state, userDetails: {...this._state.userDetails, favorite: !this._state.userDetails.favorite}});
   };
 
-  #renderCommentsComponent = () => {
-    render(this.#commentsComponent, this.element.querySelector('.film-details__bottom-container'));
+  #onChangeEmoji = (evt) => {
+    const currerScrollPosition = this.scrollPosition;
+    this.updateElement({...this._state, newComment: {...this._state.newComment, emotion: evt.target.value}});
+    this._callback.renderComments();
+    this.scrollPosition = currerScrollPosition;
+  };
+
+  #onCommentUserInput = (evt) => {
+    this._setState({newComment: {...this._state.newComment, comment: evt.target.value}});
+  };
+
+  #onCommentUserSend = (evt) => {
+    if ((evt.ctrlKey || evt.metaKey) && evt.key === 'Enter') {
+      const newComment = this._state.newComment;
+      this._setState({newComment: {emotion: null, comment: null}});
+      this._callback.newCommentSend(newComment);
+    }
+  };
+
+  #setOnInner = () => {
+    this.element.querySelector('.film-details__emoji-list').addEventListener('change', this.#onChangeEmoji);
+    this.element.querySelector('.film-details__comment-input').addEventListener('input', this.#onCommentUserInput);
   };
 
   _restoreHandlers = () => {
-    this.#renderCommentsComponent();
-    this.element.scrollTo(0, this.#scrollTopElement);
+    this.#setOnInner();
     this.setOnCloseBtnClick(this._callback.click);
     this.setOnWatchlistClick(this._callback.watchlistClick);
     this.setOnWatchedClick(this._callback.watchedClick);
     this.setOnFavoriteClick(this._callback.favoriteClick);
+    this.setOnNewCommentSend(this._callback.newCommentSend);
   };
 
-  // static convertFilmToState = (film) => {
-  //   const state = {...film};
-  //   return state;
-  // };
-
-  // static convertStateToFilm = (state) => {
-  //   const film = {...state};
-  //   return film;
-  // };
-
-  reset = (film) => {
-    this.#scrollTopElement = this.element.scrollTop;
-    this.updateElement(film);
+  update = (film, commentsCount) => {
+    this.updateElement({...this._state, film: {...film}, commentsCount: commentsCount});
+    this._callback.renderComments();
   };
 
+  static convertFilmToState = (film, commentsCount) => {
+    const state = {film: {...film}, commentsCount: commentsCount, newComment: {emotion: null, comment: null}};
+
+    return state;
+  };
 }
