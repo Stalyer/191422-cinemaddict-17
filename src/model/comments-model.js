@@ -1,34 +1,62 @@
 import Observable from '../framework/observable.js';
-import {generateComment} from '../mock/comment.js';
+import {UpdateType} from '../const.js';
 
 export default class CommentsModel extends Observable {
-  #comments = Array.from({length: 5}, generateComment);
+  #filmsApiService = null;
+  #comments = [];
 
   get comments() {
     return this.#comments;
   }
 
-  addComment = (updateType, update) => {
-    this.#comments = [
-      ...this.#comments,
-      update
-    ];
+  constructor(filmsApiService) {
+    super();
+    this.#filmsApiService = filmsApiService;
+  }
 
-    this._notify(updateType, update);
+  init = async (filmId) => {
+    try {
+      const filmComments = await this.#filmsApiService.getFilmComments(filmId);
+      this.#comments = filmComments.map(this.#adaptToClient);
+    } catch(err) {
+      this.#comments = [];
+    }
+
+    this._notify(UpdateType.INIT_COMMENTS);
   };
 
-  deleteComment = (updateType, update) => {
+  addComment = async (updateType, update) => {
+    try {
+      const response = await this.#filmsApiService.addFilmComment({comment: update.comment, emotion: update.emotion}, update.filmId);
+      const newComments = response.comments;
+      this.#comments = newComments.map(this.#adaptToClient);
+      // this._notify(updateType, update);
+    } catch(err) {
+      throw new Error('Can\'t add comment');
+    }
+  };
+
+  deleteComment = async (updateType, update) => {
     const index = this.#comments.findIndex((comment) => comment.id === update.id);
 
     if (index === -1) {
       throw new Error('Can\'t delete unexisting comment');
     }
 
-    this.#comments = [
-      ...this.#comments.slice(0, index),
-      ...this.#comments.slice(index + 1),
-    ];
+    try {
+      await this.#filmsApiService.deleteFilmComment(update.id);
+      this.#comments = [
+        ...this.#comments.slice(0, index),
+        ...this.#comments.slice(index + 1),
+      ];
+      this._notify(updateType);
+    } catch(err) {
+      throw new Error('Can\'t delete comment');
+    }
+  };
 
-    this._notify(updateType);
+  #adaptToClient = (comment) => {
+    const adaptedComment = {...comment, date: new Date(comment.date)};
+    return adaptedComment;
   };
 }

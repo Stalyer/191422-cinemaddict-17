@@ -15,6 +15,7 @@ export default class FilmPresenter {
   #filmComponent = null;
   #filmDetailsComponent = null;
   #filterModel = null;
+  #commentsModel = null;
 
   #changeData = null;
   #changeMode = null;
@@ -22,29 +23,33 @@ export default class FilmPresenter {
 
   #film = null;
   #comments = null;
-  #someComments = null;
+  #isLoadingComments = true;
+  // #someComments = null;
 
-  constructor(filmListContainer, filmDetailsContainer, changeData, changeMode, filterModel) {
+  constructor(filmListContainer, filmDetailsContainer, changeData, changeMode, filterModel, commentsModel) {
     this.#filmListContainer = filmListContainer;
     this.#filmDetailsContainer = filmDetailsContainer;
     this.#changeData = changeData;
     this.#changeMode = changeMode;
     this.#filterModel = filterModel;
+    this.#commentsModel = commentsModel;
   }
 
-  init = (film, comments) => {
+  init = (film) => {
     this.#film = film;
-    this.#comments = comments;
-    this.#someComments = this.#comments.filter((comment) => this.#film.comments.includes(comment.id));
+
+    // this.#someComments = this.#comments.filter((comment) => this.#film.comments.includes(comment.id));
 
     const prevFilmComponent = this.#filmComponent;
     this.#filmComponent = new FilmCardView(film);
-
     const openFilmDetails = () => {
       this.#changeMode();
       this.#mode = Mode.DETAILS;
-      this.#filmDetailsComponent = new FilmDetailsView(this.#film, this.#someComments.length);
-      this.#renderFilmDetailComments();
+
+      this.#filmDetailsComponent = new FilmDetailsView(this.#film, this.#film.comments.length);
+      this.#commentsModel.addObserver(this.#onModelEvent);
+      this.#commentsModel.init(this.#film.id);
+
       this.#setFilmDetailsEvent();
       this.#filmDetailsContainer.classList.add('hide-overflow');
       render(this.#filmDetailsComponent, this.#filmDetailsContainer);
@@ -65,8 +70,20 @@ export default class FilmPresenter {
 
     if (this.#mode === Mode.DETAILS) {
       const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
-      this.#filmDetailsComponent.update(this.#film, this.#someComments.length);
+      // this.#comments = this.#commentsModel.getFilmComments(this.#film.id);
+      this.#filmDetailsComponent.update(this.#film, this.#comments.length);
       this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
+    }
+  };
+
+  #onModelEvent = (updateType) => {
+    // console.log('comment ', updateType, data);
+    switch (updateType) {
+      case UpdateType.INIT_COMMENTS:
+        this.#isLoadingComments = false;
+        this.#comments = this.#commentsModel.comments;
+        this.#renderFilmDetailComments();
+        break;
     }
   };
 
@@ -80,7 +97,7 @@ export default class FilmPresenter {
   };
 
   #onWatchedClick = () => {
-    const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, alreadyWatched: !this.#film.userDetails.alreadyWatched}};
+    const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, alreadyWatched: !this.#film.userDetails.alreadyWatched, watchingDate: !this.#film.userDetails.alreadyWatched ? new Date() : null }};
     if (this.#filterModel.filter !== FilterType.ALL && this.#filterModel.filter === FilterType.HISTORY) {
       this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.MAJOR, filmUpdate);
     } else {
@@ -122,28 +139,31 @@ export default class FilmPresenter {
   };
 
   #onSendNewComment = ({comment, emotion}) => {
-    const lastComment = this.#comments[this.#comments.length - 1];
-    const idNewComment = lastComment.id + 1;
+    // const lastComment = this.#comments[this.#comments.length - 1];
+    // const idNewComment = lastComment.id + 1;
     const newComment = {
-      id: idNewComment,
-      author: 'User',
+      filmId: this.#film.id,
       comment: comment,
       emotion: emotion ? emotion : 'smile',
     };
-    const filmUpdate = {...this.#film, comments: [...this.#film.comments, idNewComment]};
-    this.#changeData(UserAction.ADD_COMMENT, UpdateType.PATCH, filmUpdate, newComment);
+    // const filmUpdate = {...this.#film, comments: [...this.#film.comments, idNewComment]};
+    this.#changeData(UserAction.ADD_COMMENT, UpdateType.PATCH, newComment);
   };
 
   #onDeleteCommentClick = (commentUpdate) => {
-    const index = this.#film.comments.findIndex((id) => id === commentUpdate.id);
-    const filmCommentIds = this.#film.comments.slice();
-    filmCommentIds.splice(index, 1);
-    const filmUpdate = {...this.#film, comments: filmCommentIds};
-    this.#changeData(UserAction.DELETE_COMMENT, UpdateType.PATCH, filmUpdate, commentUpdate);
+    // const index = this.#film.comments.findIndex((id) => id === commentUpdate.id);
+    // const filmCommentIds = this.#film.comments.slice();
+    // filmCommentIds.splice(index, 1);
+    // const filmUpdate = {...this.#film, comments: filmCommentIds};
+    this.#changeData(UserAction.DELETE_COMMENT, UpdateType.PATCH, commentUpdate);
   };
 
   #renderFilmDetailComments = () => {
-    this.#someComments.forEach((comment) => {
+    // if (this.#isLoadingComments) {
+    //   return;
+    // }
+
+    this.#comments.forEach((comment) => {
       const commentCardComponent = new CommentCardView(comment);
       commentCardComponent.setOnDeleteCommentClick(this.#onDeleteCommentClick);
       render(commentCardComponent, this.#filmDetailsComponent.commentsContainerNode);

@@ -27,6 +27,7 @@ export default class FilmsPresenter {
   #filmsListRatedComponent = null;
   #filmsListCommentedComponent = null;
   #filmsListEmptyComponent = null;
+  #loadingComponent = new FilmsListView({typeSection: 'empty', title: 'Loading...'});
   #showMoreComponent = null;
   #sortComponent = null;
   #renderedFilmCount = FILM_COUNT_PER_STEP;
@@ -35,6 +36,7 @@ export default class FilmsPresenter {
   #filmCommentedPresenter = new Map();
   #currentSortType = SortType.DEFAULT;
   #filterType = FilterType.ALL;
+  #isLoading = true;
 
   constructor(filmsContainer, filmDetailsContainer, filmsModel, commentsModel, filterModel) {
     this.#filmsContainer = filmsContainer;
@@ -44,7 +46,7 @@ export default class FilmsPresenter {
     this.#filterModel = filterModel;
 
     this.#filmsModel.addObserver(this.#onModelEvent);
-    // this.#commentsModel.addObserver(this.#onModelEvent);
+    this.#commentsModel.addObserver(this.#onModelEvent);
     this.#filterModel.addObserver(this.#onModelEvent);
   }
 
@@ -63,9 +65,9 @@ export default class FilmsPresenter {
     return filteredFilms;
   }
 
-  get comments() {
-    return this.#commentsModel.comments;
-  }
+  // get comments() {
+  //   return this.#commentsModel.comments;
+  // }
 
   init = () => {
     this.#renderFilmsContainer();
@@ -76,8 +78,8 @@ export default class FilmsPresenter {
   };
 
   #renderFilm = (film, container, presenter) => {
-    const filmPresenter = new FilmPresenter(container, this.#filmDetailsContainer, this.#onViewAction, this.#onModeChange, this.#filterModel);
-    filmPresenter.init(film, this.comments);
+    const filmPresenter = new FilmPresenter(container, this.#filmDetailsContainer, this.#onViewAction, this.#onModeChange, this.#filterModel, this.#commentsModel);
+    filmPresenter.init(film);
     presenter.set(film.id, filmPresenter);
   };
 
@@ -100,38 +102,45 @@ export default class FilmsPresenter {
     this.#filmCommentedPresenter.forEach((presenter) => presenter.resetView());
   };
 
-  #onViewAction = (actionType, updateType, updateFilm, updateComment = false) => {
+  #onViewAction = (actionType, updateType, update) => {
     switch (actionType) {
       case UserAction.UPDATE_USER_LIST_FILM:
-        this.#filmsModel.updateFilm(updateType, updateFilm);
+        this.#filmsModel.updateFilm(updateType, update);
         break;
       case UserAction.ADD_COMMENT:
-        this.#commentsModel.addComment(updateType, updateComment);
-        this.#filmsModel.updateFilm(updateType, updateFilm);
+        this.#commentsModel.addComment(updateType, update);
+        // this.#filmsModel.updateFilm(updateType, updateFilm);
         break;
       case UserAction.DELETE_COMMENT:
-        this.#commentsModel.deleteComment(updateType, updateComment);
-        this.#filmsModel.updateFilm(updateType, updateFilm);
+        this.#commentsModel.deleteComment(updateType, update);
+
+        // this.#filmsModel.updateFilm(updateType, updateFilm);
         break;
     }
   };
 
   #onModelEvent = (updateType, data) => {
-    const filmMainPresenterFound = this.#filmMainPresenter.get(data.id);
-    const filmRatedPresenterFound = this.#filmRatedPresenter.get(data.id);
-    const filmCommentedPresenterFound = this.#filmCommentedPresenter.get(data.id);
+    // console.log('films ', updateType, data);
+    let filmMainPresenterFound = null;
+    let filmRatedPresenterFound = null;
+    let filmCommentedPresenterFound = null;
+    if (data) {
+      filmMainPresenterFound = this.#filmMainPresenter.get(data.id);
+      filmRatedPresenterFound = this.#filmRatedPresenter.get(data.id);
+      filmCommentedPresenterFound = this.#filmCommentedPresenter.get(data.id);
+    }
     switch (updateType) {
       case UpdateType.PATCH:
         if (filmMainPresenterFound) {
-          filmMainPresenterFound.init(data, this.comments);
+          filmMainPresenterFound.init(data);
         }
 
         if (filmRatedPresenterFound) {
-          filmRatedPresenterFound.init(data, this.comments);
+          filmRatedPresenterFound.init(data);
         }
 
         if (filmCommentedPresenterFound) {
-          filmCommentedPresenterFound.init(data, this.comments);
+          filmCommentedPresenterFound.init(data);
         }
         break;
       case UpdateType.MINOR:
@@ -140,6 +149,12 @@ export default class FilmsPresenter {
         break;
       case UpdateType.MAJOR:
         this.#clearFilmsContainer({resetRenderedFilmCount: true, resetSortType: true});
+        this.#renderFilmsContainer();
+        break;
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        remove(this.#loadingComponent);
+        this.#clearFilmsContainer();
         this.#renderFilmsContainer();
         break;
     }
@@ -193,11 +208,16 @@ export default class FilmsPresenter {
   };
 
   #renderFilmsContainer = () => {
+    render(this.#filmsComponent, this.#filmsContainer);
+
+    if (this.#isLoading) {
+      this.#renderLoading();
+      return;
+    }
+
     const films = this.films;
     const filmCount = films.length;
     const filmsAll = this.#filmsModel.films;
-
-    render(this.#filmsComponent, this.#filmsContainer);
 
     if (filmCount === 0) {
       this.#renderNoFilms();
@@ -207,6 +227,10 @@ export default class FilmsPresenter {
     this.#renderSort();
     this.#renderFilmsMainList(films, filmCount);
     this.#renderFilmsExtraList(filmsAll);
+  };
+
+  #renderLoading = () => {
+    render(this.#loadingComponent, this.#filmsComponent.element);
   };
 
   #renderNoFilms = () => {
@@ -234,6 +258,7 @@ export default class FilmsPresenter {
     this.#filmCommentedPresenter.clear();
 
     remove(this.#sortComponent);
+    remove(this.#loadingComponent);
     remove(this.#showMoreComponent);
     remove(this.#filmsListMainComponent);
     remove(this.#filmsListRatedComponent);
