@@ -46,10 +46,10 @@ export default class MainNavigationView extends AbstractView {
   };
 
   #onfilterTypeClick = (evt) => {
-    if (evt.target.tagName !== 'A') {
-      return;
+    if (evt.target.tagName === 'A' || evt.target.tagName === 'SPAN') {
+      evt.preventDefault();
+      const filterType = evt.target.tagName === 'A' ? evt.target.dataset.filterType : evt.target.parentElement.dataset.filterType;
+      this._callback.filterTypeClick(filterType);
     }
-    evt.preventDefault();
-    this._callback.filterTypeClick(evt.target.dataset.filterType);
   };
 }
