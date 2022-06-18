@@ -1,5 +1,4 @@
 import {render} from './framework/render.js';
-import ProfileView from './view/profile-view.js';
 import StatisticsView from './view/statistics-view.js';
 import FilmsPresenter from './presenter/films-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
@@ -21,10 +20,9 @@ const filmsModel = new FilmsModel(new FilmsApiService(END_POINT, AUTHORIZATION))
 const commentsModel = new CommentsModel(new FilmsApiService(END_POINT, AUTHORIZATION));
 const filterModel = new FilterModel();
 
-const filmsPresenter = new FilmsPresenter(siteMainNode, siteBodyNode, filmsModel, commentsModel, filterModel);
+const filmsPresenter = new FilmsPresenter(siteHeaderNode, siteMainNode, siteBodyNode, filmsModel, commentsModel, filterModel);
 const filterPresenter = new FilterPresenter(siteMainNode, filterModel, filmsModel);
 
-render(new ProfileView, siteHeaderNode);
 filterPresenter.init();
 filmsPresenter.init();
 filmsModel.init().finally(() => {

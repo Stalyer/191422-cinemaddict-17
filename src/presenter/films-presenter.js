@@ -1,5 +1,6 @@
 import {render, RenderPosition, remove} from '../framework/render.js';
 import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
+import ProfileView from '../view/profile-view.js';
 import FilmsView from '../view/films-view.js';
 import FilmsListView from '../view/films-list-view.js';
 import ShowMoreView from '../view/show-more-view.js';
@@ -23,11 +24,13 @@ const TimeLimit = {
 };
 
 export default class FilmsPresenter {
+  #headerContainer = null;
   #filmsContainer = null;
   #filmDetailsContainer = null;
   #filmsModel = null;
   #commentsModel = null;
   #filterModel = null;
+  #profileComponent = null;
   #filmsComponent = new FilmsView();
   #filmsListMainComponent = null;
   #filmsListRatedComponent = null;
@@ -45,7 +48,8 @@ export default class FilmsPresenter {
   #isLoading = true;
   #uiBlocker = new UiBlocker(TimeLimit.LOWER_LIMIT, TimeLimit.UPPER_LIMIT);
 
-  constructor(filmsContainer, filmDetailsContainer, filmsModel, commentsModel, filterModel) {
+  constructor(headerContainer, filmsContainer, filmDetailsContainer, filmsModel, commentsModel, filterModel) {
+    this.#headerContainer = headerContainer;
     this.#filmsContainer = filmsContainer;
     this.#filmDetailsContainer = filmDetailsContainer;
     this.#filmsModel = filmsModel;
@@ -220,17 +224,27 @@ export default class FilmsPresenter {
     render(this.#filmsListMainComponent, this.#filmsComponent.element);
   };
 
-  #renderFilmsExtraList = (films) => {
-    this.#filmsListRatedComponent = new FilmsListView({typeSection: 'extra', title: 'Top rated'});
-    this.#filmsListCommentedComponent = new FilmsListView({typeSection: 'extra', title: 'Most commented'});
-
+  #renderFilmsRatedList = (films) => {
     const filmsRatedItems = films.slice(0, films.length).sort(sortFilmRated);
+
+    if (!filmsRatedItems[0]['filmInfo']['totalRating']) {
+      return;
+    }
+
+    this.#filmsListRatedComponent = new FilmsListView({typeSection: 'extra', title: 'Top rated'});
+    this.#renderFilms(filmsRatedItems.slice(0, Math.min(filmsRatedItems.length, FILMS_COUNT.rating)), this.#filmsListRatedComponent, this.#filmRatedPresenter);
+    render(this.#filmsListRatedComponent, this.#filmsComponent.element);
+  };
+
+  #renderFilmsCommentedList = (films) => {
     const filmsCommentedItems = films.slice(0, films.length).sort(sortFilmCommented);
 
-    this.#renderFilms(filmsRatedItems.slice(0, Math.min(filmsRatedItems.length, FILMS_COUNT.rating)), this.#filmsListRatedComponent, this.#filmRatedPresenter);
-    this.#renderFilms(filmsCommentedItems.slice(0, Math.min(filmsCommentedItems.length, FILMS_COUNT.commented)), this.#filmsListCommentedComponent, this.#filmCommentedPresenter);
+    if (!filmsCommentedItems[0]['comments'].length) {
+      return;
+    }
 
-    render(this.#filmsListRatedComponent, this.#filmsComponent.element);
+    this.#filmsListCommentedComponent = new FilmsListView({typeSection: 'extra', title: 'Most commented'});
+    this.#renderFilms(filmsCommentedItems.slice(0, Math.min(filmsCommentedItems.length, FILMS_COUNT.commented)), this.#filmsListCommentedComponent, this.#filmCommentedPresenter);
     render(this.#filmsListCommentedComponent, this.#filmsComponent.element);
   };
 
@@ -251,9 +265,11 @@ export default class FilmsPresenter {
       return;
     }
 
+    this.#renderProfile();
     this.#renderSort();
     this.#renderFilmsMainList(films, filmCount);
-    this.#renderFilmsExtraList(filmsAll);
+    this.#renderFilmsRatedList(filmsAll);
+    this.#renderFilmsCommentedList(filmsAll);
   };
 
   #renderLoading = () => {
@@ -272,6 +288,12 @@ export default class FilmsPresenter {
     render(this.#filmsListEmptyComponent, this.#filmsComponent.element);
   };
 
+  #renderProfile = () => {
+    const watchedFilms = filter[FilterType.HISTORY](this.#filmsModel.films);
+    this.#profileComponent = new ProfileView(watchedFilms.length);
+    render(this.#profileComponent, this.#headerContainer);
+  };
+
   #clearFilmsContainer = ({resetRenderedFilmCount = false, resetSortType = false} = {}) => {
     const filmCount = this.films.length;
 
@@ -284,6 +306,7 @@ export default class FilmsPresenter {
     this.#filmCommentedPresenter.forEach((presenter) => presenter.destroy());
     this.#filmCommentedPresenter.clear();
 
+    remove(this.#profileComponent);
     remove(this.#sortComponent);
     remove(this.#loadingComponent);
     remove(this.#showMoreComponent);
