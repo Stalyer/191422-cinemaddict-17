@@ -16,6 +16,7 @@ export default class FilmPresenter {
   #filmDetailsComponent = null;
   #filterModel = null;
   #commentsModel = null;
+  #commentCardView = new Map();
 
   #changeData = null;
   #changeMode = null;
@@ -24,7 +25,6 @@ export default class FilmPresenter {
   #film = null;
   #comments = null;
   #isLoadingComments = true;
-  // #someComments = null;
 
   constructor(filmListContainer, filmDetailsContainer, changeData, changeMode, filterModel, commentsModel) {
     this.#filmListContainer = filmListContainer;
@@ -35,11 +35,12 @@ export default class FilmPresenter {
     this.#commentsModel = commentsModel;
   }
 
+  get mode() {
+    return this.#mode;
+  }
+
   init = (film) => {
     this.#film = film;
-
-    // this.#someComments = this.#comments.filter((comment) => this.#film.comments.includes(comment.id));
-
     const prevFilmComponent = this.#filmComponent;
     this.#filmComponent = new FilmCardView(film);
     const openFilmDetails = () => {
@@ -70,14 +71,14 @@ export default class FilmPresenter {
 
     if (this.#mode === Mode.DETAILS) {
       const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
-      // this.#comments = this.#commentsModel.getFilmComments(this.#film.id);
-      this.#filmDetailsComponent.update(this.#film, this.#comments.length);
+      this.#comments = this.#commentsModel.comments;
+      this.#filmDetailsComponent.updateElement(FilmDetailsView.convertFilmToState(this.#film, this.#comments.length));
+      this.#renderFilmDetailComments();
       this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
     }
   };
 
   #onModelEvent = (updateType) => {
-    // console.log('comment ', updateType, data);
     switch (updateType) {
       case UpdateType.INIT_COMMENTS:
         this.#isLoadingComments = false;
@@ -90,27 +91,27 @@ export default class FilmPresenter {
   #onWatchlistClick = () => {
     const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, watchlist: !this.#film.userDetails.watchlist}};
     if (this.#filterModel.filter !== FilterType.ALL && this.#filterModel.filter === FilterType.WATCHLIST) {
-      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.MAJOR, filmUpdate);
+      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.MAJOR, {film: filmUpdate});
     } else {
-      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.PATCH, filmUpdate);
+      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.PATCH, {film: filmUpdate});
     }
   };
 
   #onWatchedClick = () => {
     const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, alreadyWatched: !this.#film.userDetails.alreadyWatched, watchingDate: !this.#film.userDetails.alreadyWatched ? new Date() : null }};
     if (this.#filterModel.filter !== FilterType.ALL && this.#filterModel.filter === FilterType.HISTORY) {
-      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.MAJOR, filmUpdate);
+      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.MAJOR, {film: filmUpdate});
     } else {
-      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.PATCH, filmUpdate);
+      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.PATCH, {film: filmUpdate});
     }
   };
 
   #onFavoriteClick = () => {
     const filmUpdate = {...this.#film, userDetails: {...this.#film.userDetails, favorite: !this.#film.userDetails.favorite}};
     if (this.#filterModel.filter !== FilterType.ALL && this.#filterModel.filter === FilterType.FAVORITES) {
-      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.MAJOR, filmUpdate);
+      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.MAJOR, {film: filmUpdate});
     } else {
-      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.PATCH, filmUpdate);
+      this.#changeData(UserAction.UPDATE_USER_LIST_FILM, UpdateType.PATCH, {film: filmUpdate});
     }
   };
 
@@ -139,35 +140,65 @@ export default class FilmPresenter {
   };
 
   #onSendNewComment = ({comment, emotion}) => {
-    // const lastComment = this.#comments[this.#comments.length - 1];
-    // const idNewComment = lastComment.id + 1;
     const newComment = {
-      filmId: this.#film.id,
       comment: comment,
       emotion: emotion ? emotion : 'smile',
     };
-    // const filmUpdate = {...this.#film, comments: [...this.#film.comments, idNewComment]};
-    this.#changeData(UserAction.ADD_COMMENT, UpdateType.PATCH, newComment);
+    this.#changeData(UserAction.ADD_COMMENT, UpdateType.PATCH, {film: this.#film, newComment: newComment});
   };
 
   #onDeleteCommentClick = (commentUpdate) => {
-    // const index = this.#film.comments.findIndex((id) => id === commentUpdate.id);
-    // const filmCommentIds = this.#film.comments.slice();
-    // filmCommentIds.splice(index, 1);
-    // const filmUpdate = {...this.#film, comments: filmCommentIds};
-    this.#changeData(UserAction.DELETE_COMMENT, UpdateType.PATCH, commentUpdate);
+    this.#changeData(UserAction.DELETE_COMMENT, UpdateType.PATCH, {film: this.#film, commentUpdate: commentUpdate});
   };
 
   #renderFilmDetailComments = () => {
-    // if (this.#isLoadingComments) {
-    //   return;
-    // }
-
+    if (this.#isLoadingComments) {
+      return;
+    }
+    this.#commentCardView.clear();
     this.#comments.forEach((comment) => {
       const commentCardComponent = new CommentCardView(comment);
       commentCardComponent.setOnDeleteCommentClick(this.#onDeleteCommentClick);
+      this.#commentCardView.set(comment.id, commentCardComponent);
       render(commentCardComponent, this.#filmDetailsComponent.commentsContainerNode);
     });
+  };
+
+  setDeletingComment = (commentId) => {
+    if (this.#mode === Mode.DETAILS) {
+      this.#commentCardView.get(commentId).updateElement({isDeleting: true});
+    }
+  };
+
+  setDeletingCommentAborting = (commentId) => {
+    if (this.#mode === Mode.DETAILS) {
+      const resetCommentState = () => {
+        this.#commentCardView.get(commentId).updateElement({isDeleting: false});
+      };
+
+      this.#commentCardView.get(commentId).shake(resetCommentState);
+    }
+  };
+
+  setUpdateFilmCard = () => {
+    if (this.#mode === Mode.DETAILS) {
+      const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
+      this.#filmDetailsComponent.updateElement({isDisabled: true});
+      this.#renderFilmDetailComments();
+      this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
+    }
+  };
+
+  setUpdateFilmCardAborting = () => {
+    if (this.#mode === Mode.DETAILS) {
+      const resetFilmCardState = () => {
+        const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
+        this.#filmDetailsComponent.updateElement({isDisabled: false});
+        this.#renderFilmDetailComments();
+        this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
+      };
+      this.#filmDetailsComponent.shake(resetFilmCardState);
+    }
   };
 
   resetView = () => {

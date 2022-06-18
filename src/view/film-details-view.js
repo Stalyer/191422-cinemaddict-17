@@ -5,7 +5,7 @@ import {EMOTIONS} from '../const.js';
 import he from 'he';
 
 const createFilmDetailsTemplate = (filmItem) => {
-  const {film, commentsCount, newComment} = filmItem;
+  const {film, commentsCount, newComment, isDisabled} = filmItem;
   const {filmInfo, userDetails} = film;
   const watchlistClassName = userDetails.watchlist ? ' film-details__control-button--active' : '';
   const alreadyWatchedClassName = userDetails.alreadyWatched ? ' film-details__control-button--active' : '';
@@ -26,6 +26,7 @@ const createFilmDetailsTemplate = (filmItem) => {
     id="emoji-${emotion}"
     value="${emotion}"
     ${currentEmotion === emotion ? 'checked' : ''}
+    ${isDisabled ? 'disabled' : ''}
   >
   <label
     class="film-details__emoji-label"
@@ -44,7 +45,7 @@ const createFilmDetailsTemplate = (filmItem) => {
       <div class="film-details__add-emoji-label">${emojiImageTemplate}</div>
 
       <label class="film-details__comment-label">
-        <textarea class="film-details__comment-input" placeholder="Select reaction below and write comment here" name="comment">${he.encode(userComment)}</textarea>
+        <textarea class="film-details__comment-input" placeholder="Select reaction below and write comment here" name="comment"${isDisabled ? ' disabled' : ''}>${he.encode(userComment)}</textarea>
       </label>
 
       <div class="film-details__emoji-list">
@@ -104,7 +105,7 @@ const createFilmDetailsTemplate = (filmItem) => {
                         <td class="film-details__cell">${filmInfo.release.releaseCountry}</td>
                       </tr>
                       <tr class="film-details__row">
-                        <td class="film-details__term">Genres</td>
+                        <td class="film-details__term">${filmInfo.genre.length > 1 ? 'Genres' : 'Genre'}</td>
                         <td class="film-details__cell">
                           ${createGenresTemplate(filmInfo.genre)}
                         </td>
@@ -118,9 +119,9 @@ const createFilmDetailsTemplate = (filmItem) => {
                 </div>
 
                 <section class="film-details__controls">
-                  <button type="button" class="film-details__control-button film-details__control-button--watchlist${watchlistClassName}" id="watchlist" name="watchlist">Add to watchlist</button>
-                  <button type="button" class="film-details__control-button film-details__control-button--watched${alreadyWatchedClassName}" id="watched" name="watched">Already watched</button>
-                  <button type="button" class="film-details__control-button film-details__control-button--favorite${favoriteClassName}" id="favorite" name="favorite">Add to favorites</button>
+                  <button type="button" class="film-details__control-button film-details__control-button--watchlist${watchlistClassName}" id="watchlist" name="watchlist"${isDisabled ? ' disabled' : ''}>Add to watchlist</button>
+                  <button type="button" class="film-details__control-button film-details__control-button--watched${alreadyWatchedClassName}" id="watched" name="watched"${isDisabled ? ' disabled' : ''}>Already watched</button>
+                  <button type="button" class="film-details__control-button film-details__control-button--favorite${favoriteClassName}" id="favorite" name="favorite"${isDisabled ? ' disabled' : ''}>Add to favorites</button>
                 </section>
               </div>
 
@@ -221,8 +222,7 @@ export default class FilmDetailsView extends AbstractStatefulView {
   #onCommentUserSend = (evt) => {
     if ((evt.ctrlKey || evt.metaKey) && evt.key === 'Enter') {
       const newComment = this._state.newComment;
-      this._setState({newComment: {emotion: null, comment: null}});
-      this._callback.newCommentSend(newComment);
+      this._callback.newCommentSend({emotion: newComment.emotion, comment: newComment.comment});
     }
   };
 
@@ -240,13 +240,8 @@ export default class FilmDetailsView extends AbstractStatefulView {
     this.setOnNewCommentSend(this._callback.newCommentSend);
   };
 
-  update = (film, commentsCount) => {
-    this.updateElement({...this._state, film: {...film}, commentsCount: commentsCount});
-    this._callback.renderComments();
-  };
-
   static convertFilmToState = (film, commentsCount) => {
-    const state = {film: {...film}, commentsCount: commentsCount, newComment: {emotion: null, comment: null}};
+    const state = {film: {...film}, commentsCount: commentsCount, newComment: {emotion: null, comment: null}, isDisabled: false};
 
     return state;
   };
