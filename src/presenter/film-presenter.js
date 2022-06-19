@@ -189,15 +189,18 @@ export default class FilmPresenter {
     }
   };
 
-  setUpdateFilmCardAborting = () => {
+  setUpdateFilmCardAborting = (actionType) => {
     if (this.#mode === Mode.DETAILS) {
+      const shakeNode = actionType === UserAction.UPDATE_USER_LIST_FILM ? this.#filmDetailsComponent.controlsNode : this.#filmDetailsComponent.formNode;
+
       const resetFilmCardState = () => {
         const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
         this.#filmDetailsComponent.updateElement({isDisabled: false});
         this.#renderFilmDetailComments();
         this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
       };
-      this.#filmDetailsComponent.shake(resetFilmCardState);
+
+      this.#filmDetailsComponent.shake(resetFilmCardState, shakeNode);
     }
   };
 

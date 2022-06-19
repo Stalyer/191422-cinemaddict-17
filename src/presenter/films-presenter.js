@@ -47,6 +47,7 @@ export default class FilmsPresenter {
   #filterType = FilterType.ALL;
   #isLoading = true;
   #uiBlocker = new UiBlocker(TimeLimit.LOWER_LIMIT, TimeLimit.UPPER_LIMIT);
+  #isRerenderListCommented = false;
 
   constructor(headerContainer, filmsContainer, filmDetailsContainer, filmsModel, commentsModel, filterModel) {
     this.#headerContainer = headerContainer;
@@ -57,7 +58,7 @@ export default class FilmsPresenter {
     this.#filterModel = filterModel;
 
     this.#filmsModel.addObserver(this.#onModelEvent);
-    this.#commentsModel.addObserver(this.#onModelEvent);
+    this.#commentsModel.addObserver(this.#onModelCommentEvent);
     this.#filterModel.addObserver(this.#onModelEvent);
   }
 
@@ -119,7 +120,7 @@ export default class FilmsPresenter {
         try {
           await this.#filmsModel.updateFilm(updateType, update.film);
         } catch(err) {
-          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting());
+          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting(UserAction.UPDATE_USER_LIST_FILM));
         }
         break;
       }
@@ -128,7 +129,7 @@ export default class FilmsPresenter {
         try {
           await this.#commentsModel.addComment(updateType, update);
         } catch(err) {
-          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting());
+          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting(UserAction.ADD_COMMENT));
         }
         break;
       }
@@ -165,6 +166,16 @@ export default class FilmsPresenter {
         remove(this.#loadingComponent);
         this.#clearFilmsContainer();
         this.#renderFilmsContainer();
+        break;
+    }
+  };
+
+  #onModelCommentEvent = (updateType, data) => {
+    switch (updateType) {
+      case UpdateType.PATCH:
+        this.#filmsModel.updateLocalFilm(updateType, data);
+        this.#isRerenderListCommented = true;
+        this.#renderFilmsCommentedList(this.#filmsModel.films);
         break;
     }
   };
@@ -241,6 +252,13 @@ export default class FilmsPresenter {
 
     if (!filmsCommentedItems[0]['comments'].length) {
       return;
+    }
+
+    if (this.#isRerenderListCommented) {
+      this.#filmCommentedPresenter.forEach((presenter) => presenter.destroy());
+      this.#filmCommentedPresenter.clear();
+      remove(this.#filmsListCommentedComponent);
+      this.#isRerenderListCommented = false;
     }
 
     this.#filmsListCommentedComponent = new FilmsListView({typeSection: 'extra', title: 'Most commented'});

@@ -151,6 +151,14 @@ export default class FilmDetailsView extends AbstractStatefulView {
     return this.element.querySelector('.film-details__comments-list');
   }
 
+  get formNode() {
+    return this.element.querySelector('.film-details__inner');
+  }
+
+  get controlsNode() {
+    return this.element.querySelector('.film-details__controls');
+  }
+
   get scrollPosition() {
     return this.element.scrollTop;
   }
