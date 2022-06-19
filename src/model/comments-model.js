@@ -1,4 +1,5 @@
 import Observable from '../framework/observable.js';
+import FilmsModel from './films-model.js';
 import {UpdateType} from '../const.js';
 
 export default class CommentsModel extends Observable {
@@ -17,7 +18,7 @@ export default class CommentsModel extends Observable {
   init = async (filmId) => {
     try {
       const filmComments = await this.#filmsApiService.getFilmComments(filmId);
-      this.#comments = filmComments.map(this.#adaptToClient);
+      this.#comments = filmComments.map(CommentsModel.adaptToClient);
     } catch(err) {
       this.#comments = [];
     }
@@ -26,36 +27,44 @@ export default class CommentsModel extends Observable {
   };
 
   addComment = async (updateType, update) => {
+    const {film, newComment} = update;
     try {
-      const response = await this.#filmsApiService.addFilmComment({comment: update.comment, emotion: update.emotion}, update.filmId);
+      const response = await this.#filmsApiService.addFilmComment(newComment, film.id);
       const newComments = response.comments;
-      this.#comments = newComments.map(this.#adaptToClient);
-      // this._notify(updateType, update);
+      this.#comments = newComments.map(CommentsModel.adaptToClient);
+      const updatedFilm = FilmsModel.adaptToClient(response.movie);
+      this._notify(updateType, updatedFilm);
     } catch(err) {
       throw new Error('Can\'t add comment');
     }
   };
 
   deleteComment = async (updateType, update) => {
-    const index = this.#comments.findIndex((comment) => comment.id === update.id);
+    const {film, commentUpdate} = update;
+    const index = this.#comments.findIndex((comment) => comment.id === commentUpdate.id);
 
     if (index === -1) {
       throw new Error('Can\'t delete unexisting comment');
     }
 
     try {
-      await this.#filmsApiService.deleteFilmComment(update.id);
+      await this.#filmsApiService.deleteFilmComment(commentUpdate.id);
+
+      const filmCommentIds = film.comments.slice();
+      filmCommentIds.splice(index, 1);
+      const filmUpdate = {...film, comments: filmCommentIds};
+
       this.#comments = [
         ...this.#comments.slice(0, index),
         ...this.#comments.slice(index + 1),
       ];
-      this._notify(updateType);
+      this._notify(updateType, filmUpdate);
     } catch(err) {
       throw new Error('Can\'t delete comment');
     }
   };
 
-  #adaptToClient = (comment) => {
+  static adaptToClient = (comment) => {
     const adaptedComment = {...comment, date: new Date(comment.date)};
     return adaptedComment;
   };
