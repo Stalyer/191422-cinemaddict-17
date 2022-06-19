@@ -1,9 +1,9 @@
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import dayjs from 'dayjs';
 import {converterMinutesToDuration} from '../utils/film.js';
 
 const createFilmCardTemplate = (film) => {
-  const {comments, filmInfo, userDetails} = film;
+  const {comments, filmInfo, userDetails, isDisabled} = film;
   const description = filmInfo.description.length > 140 ? `${filmInfo.description.slice(0, 139)}...` : filmInfo.description;
   const watchlistClassName = userDetails.watchlist ? ' film-card__controls-item--active' : '';
   const alreadyWatchedClassName = userDetails.alreadyWatched ? ' film-card__controls-item--active' : '';
@@ -23,23 +23,21 @@ const createFilmCardTemplate = (film) => {
       <span class="film-card__comments">${comments.length} comments</span>
     </a>
     <div class="film-card__controls">
-      <button class="film-card__controls-item film-card__controls-item--add-to-watchlist${watchlistClassName}" type="button">Add to watchlist</button>
-      <button class="film-card__controls-item film-card__controls-item--mark-as-watched${alreadyWatchedClassName}" type="button">Mark as watched</button>
-      <button class="film-card__controls-item film-card__controls-item--favorite${favoriteClassName}" type="button">Mark as favorite</button>
+      <button class="film-card__controls-item film-card__controls-item--add-to-watchlist${watchlistClassName}" type="button"${isDisabled ? ' disabled' : ''}>Add to watchlist</button>
+      <button class="film-card__controls-item film-card__controls-item--mark-as-watched${alreadyWatchedClassName}" type="button"${isDisabled ? ' disabled' : ''}>Mark as watched</button>
+      <button class="film-card__controls-item film-card__controls-item--favorite${favoriteClassName}" type="button"${isDisabled ? ' disabled' : ''}>Mark as favorite</button>
     </div>
   </article>`;
 };
 
-export default class FilmCardView extends AbstractView {
-  #film = null;
-
+export default class FilmCardView extends AbstractStatefulView {
   constructor(film) {
     super();
-    this.#film = film;
+    this._state = FilmCardView.convertFilmToState(film);
   }
 
   get template() {
-    return createFilmCardTemplate(this.#film);
+    return createFilmCardTemplate(this._state);
   }
 
   setOnLinkClick = (callback) => {
@@ -80,5 +78,18 @@ export default class FilmCardView extends AbstractView {
   #onFavoriteClick = (evt) => {
     evt.preventDefault();
     this._callback.favoriteClick();
+  };
+
+  _restoreHandlers = () => {
+    this.setOnLinkClick(this._callback.linkClick);
+    this.setOnWatchlistClick(this._callback.watchlistClick);
+    this.setOnWatchedClick(this._callback.watchedClick);
+    this.setOnFavoriteClick(this._callback.favoriteClick);
+  };
+
+  static convertFilmToState = (film) => {
+    const state = {...film, isDisabled: false};
+
+    return state;
   };
 }

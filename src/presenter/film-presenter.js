@@ -181,26 +181,45 @@ export default class FilmPresenter {
   };
 
   setUpdateFilmCard = () => {
-    if (this.#mode === Mode.DETAILS) {
-      const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
-      this.#filmDetailsComponent.updateElement({isDisabled: true});
-      this.#renderFilmDetailComments();
-      this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
+    switch (this.#mode) {
+      case Mode.DEFAULT:
+        this.#filmComponent.updateElement({isDisabled: true});
+        break;
+      case Mode.DETAILS: {
+        const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
+        this.#filmDetailsComponent.updateElement({isDisabled: true});
+        this.#renderFilmDetailComments();
+        this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
+        break;
+      }
     }
   };
 
   setUpdateFilmCardAborting = (actionType) => {
-    if (this.#mode === Mode.DETAILS) {
-      const shakeNode = actionType === UserAction.UPDATE_USER_LIST_FILM ? this.#filmDetailsComponent.controlsNode : this.#filmDetailsComponent.formNode;
+    switch (this.#mode) {
+      case Mode.DEFAULT: {
+        this.#filmComponent.updateElement({isDisabled: false});
 
-      const resetFilmCardState = () => {
-        const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
-        this.#filmDetailsComponent.updateElement({isDisabled: false});
-        this.#renderFilmDetailComments();
-        this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
-      };
+        const resetFilmCardState = () => {
+          this.#filmComponent.updateElement({isDisabled: false});
+        };
 
-      this.#filmDetailsComponent.shake(resetFilmCardState, shakeNode);
+        this.#filmComponent.shake(resetFilmCardState);
+        break;
+      }
+      case Mode.DETAILS: {
+        const shakeNode = actionType === UserAction.UPDATE_USER_LIST_FILM ? this.#filmDetailsComponent.controlsNode : this.#filmDetailsComponent.formNode;
+
+        const resetFilmDetailsCardState = () => {
+          const currerScrollPosition = this.#filmDetailsComponent.scrollPosition;
+          this.#filmDetailsComponent.updateElement({isDisabled: false});
+          this.#renderFilmDetailComments();
+          this.#filmDetailsComponent.scrollPosition = currerScrollPosition;
+        };
+
+        this.#filmDetailsComponent.shake(resetFilmDetailsCardState, shakeNode);
+        break;
+      }
     }
   };
 
