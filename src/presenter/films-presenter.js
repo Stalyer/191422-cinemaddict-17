@@ -6,6 +6,7 @@ import FilmsListView from '../view/films-list-view.js';
 import ShowMoreView from '../view/show-more-view.js';
 import SortView from '../view/sort-view.js';
 import FilmPresenter from './film-presenter.js';
+import FilmDetailsPresenter from './film-details-presenter.js';
 import {SortType, UserAction, UpdateType, FilterType} from '../const.js';
 import {sortFilmDate, sortFilmCommented, sortFilmRated} from '../utils/film.js';
 import {filter} from '../utils/filter.js';
@@ -43,6 +44,7 @@ export default class FilmsPresenter {
   #filmMainPresenter = new Map();
   #filmRatedPresenter = new Map();
   #filmCommentedPresenter = new Map();
+  #filmDetailsPresenter = null;
   #currentSortType = SortType.DEFAULT;
   #filterType = FilterType.ALL;
   #isLoading = true;
@@ -64,7 +66,7 @@ export default class FilmsPresenter {
 
   get films() {
     this.#filterType = this.#filterModel.filter;
-    const films = this.#filmsModel.films;
+    const films = this.#filmsModel.films.slice();
     const filteredFilms = filter[this.#filterType](films);
 
     switch (this.#currentSortType) {
@@ -86,9 +88,14 @@ export default class FilmsPresenter {
   };
 
   #renderFilm = (film, container, presenter) => {
-    const filmPresenter = new FilmPresenter(container, this.#filmDetailsContainer, this.#onViewAction, this.#onModeChange, this.#filterModel, this.#commentsModel);
+    const filmPresenter = new FilmPresenter(container, this.#onViewAction, this.#onModeChangeCard, this.#filterModel);
     filmPresenter.init(film);
     presenter.set(film.id, filmPresenter);
+  };
+
+  #renderFilmDetails = (film) => {
+    this.#filmDetailsPresenter = new FilmDetailsPresenter(this.#filmDetailsContainer, this.#onViewAction, this.#onModeChangeDetailsCard, this.#filterModel, this.#commentsModel);
+    this.#filmDetailsPresenter.init(film);
   };
 
   #onShowMoreButtonClick = () => {
@@ -104,10 +111,15 @@ export default class FilmsPresenter {
     }
   };
 
-  #onModeChange = () => {
-    this.#filmMainPresenter.forEach((presenter) => presenter.resetView());
-    this.#filmRatedPresenter.forEach((presenter) => presenter.resetView());
-    this.#filmCommentedPresenter.forEach((presenter) => presenter.resetView());
+  #onModeChangeCard = (film) => {
+    if (this.#filmDetailsPresenter) {
+      this.#filmDetailsPresenter.resetView();
+    }
+    this.#renderFilmDetails(film);
+  };
+
+  #onModeChangeDetailsCard = () => {
+    this.#filmDetailsPresenter = null;
   };
 
   #onViewAction = async (actionType, updateType, update) => {
@@ -117,28 +129,34 @@ export default class FilmsPresenter {
     switch (actionType) {
       case UserAction.UPDATE_USER_LIST_FILM: {
         filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCard());
+        if (this.#filmDetailsPresenter) {
+          this.#filmDetailsPresenter.setUpdateFilmCard();
+        }
         try {
           await this.#filmsModel.updateFilm(updateType, update.film);
         } catch(err) {
-          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting(UserAction.UPDATE_USER_LIST_FILM));
+          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting());
+          if (this.#filmDetailsPresenter) {
+            this.#filmDetailsPresenter.setUpdateFilmCardAborting(UserAction.UPDATE_USER_LIST_FILM);
+          }
         }
         break;
       }
       case UserAction.ADD_COMMENT: {
-        filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCard());
+        this.#filmDetailsPresenter.setUpdateFilmCard(UserAction.ADD_COMMENT);
         try {
           await this.#commentsModel.addComment(updateType, update);
         } catch(err) {
-          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting(UserAction.ADD_COMMENT));
+          this.#filmDetailsPresenter.setUpdateFilmCardAborting(UserAction.ADD_COMMENT);
         }
         break;
       }
       case UserAction.DELETE_COMMENT: {
-        filmPresentersFound.forEach((presenter) => presenter.setDeletingComment(update.commentUpdate.id));
+        this.#filmDetailsPresenter.setDeletingComment(update.commentUpdate.id);
         try {
           await this.#commentsModel.deleteComment(updateType, update);
         } catch(err) {
-          filmPresentersFound.forEach((presenter) => presenter.setDeletingCommentAborting(update.commentUpdate.id));
+          this.#filmDetailsPresenter.setDeletingCommentAborting(update.commentUpdate.id);
         }
         break;
       }
@@ -151,15 +169,30 @@ export default class FilmsPresenter {
     switch (updateType) {
       case UpdateType.PATCH: {
         this.#getFilmFromPresenters(data.id).forEach((presenter) => presenter.init(data));
+        if (this.#filmDetailsPresenter) {
+          if (this.#filmDetailsPresenter.film.id === data.id) {
+            this.#filmDetailsPresenter.init(data);
+          }
+        }
         break;
       }
       case UpdateType.MINOR:
         this.#clearFilmsContainer();
         this.#renderFilmsContainer();
+        if (this.#filmDetailsPresenter) {
+          if (this.#filmDetailsPresenter.film.id === data.id) {
+            this.#filmDetailsPresenter.init(data);
+          }
+        }
         break;
       case UpdateType.MAJOR:
         this.#clearFilmsContainer({resetRenderedFilmCount: true, resetSortType: true});
         this.#renderFilmsContainer();
+        if (this.#filmDetailsPresenter) {
+          if (this.#filmDetailsPresenter.film.id === data.id) {
+            this.#filmDetailsPresenter.init(data);
+          }
+        }
         break;
       case UpdateType.INIT:
         this.#isLoading = false;
