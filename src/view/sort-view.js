@@ -9,7 +9,7 @@ const createSortTemplate = (currentSortType) => (
    </ul>`
 );
 
-export default class SortrView extends AbstractView {
+export default class SortView extends AbstractView {
   #currentSortType = null;
 
   constructor(currentSortType) {
@@ -21,16 +21,16 @@ export default class SortrView extends AbstractView {
     return createSortTemplate(this.#currentSortType);
   }
 
-  setOnSortTypeChange = (callback) => {
-    this._callback.sortTypeChange = callback;
-    this.element.addEventListener('click', this.#onSortTypeChange);
-  };
-
   #onSortTypeChange = (evt) => {
     if (evt.target.tagName !== 'A') {
       return;
     }
     evt.preventDefault();
     this._callback.sortTypeChange(evt.target.dataset.sortType);
+  };
+
+  setOnSortTypeChange = (callback) => {
+    this._callback.sortTypeChange = callback;
+    this.element.addEventListener('click', this.#onSortTypeChange);
   };
 }

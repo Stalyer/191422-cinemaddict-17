@@ -98,146 +98,9 @@ export default class FilmsPresenter {
     this.#filmDetailsPresenter.init(film);
   };
 
-  #onShowMoreButtonClick = () => {
-    const filmCount = this.films.length;
-    const newRenderedFilmCount = Math.min(filmCount, this.#renderedFilmCount + FILM_COUNT_PER_STEP);
-    const films = this.films.slice(this.#renderedFilmCount, newRenderedFilmCount);
-
-    this.#renderFilms(films, this.#filmsListMainComponent, this.#filmMainPresenter);
-    this.#renderedFilmCount += FILM_COUNT_PER_STEP;
-
-    if (this.#renderedFilmCount >= this.films.length) {
-      remove(this.#showMoreComponent);
-    }
-  };
-
-  #onModeChangeCard = (film) => {
-    if (this.#filmDetailsPresenter) {
-      this.#filmDetailsPresenter.resetView();
-    }
-    this.#renderFilmDetails(film);
-  };
-
-  #onModeChangeDetailsCard = () => {
-    this.#filmDetailsPresenter = null;
-  };
-
-  #onViewAction = async (actionType, updateType, update) => {
-    this.#uiBlocker.block();
-
-    const filmPresentersFound = this.#getFilmFromPresenters(update.film.id);
-    switch (actionType) {
-      case UserAction.UPDATE_USER_LIST_FILM: {
-        filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCard());
-        if (this.#filmDetailsPresenter) {
-          this.#filmDetailsPresenter.setUpdateFilmCard();
-        }
-        try {
-          await this.#filmsModel.updateFilm(updateType, update.film);
-        } catch(err) {
-          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting());
-          if (this.#filmDetailsPresenter) {
-            this.#filmDetailsPresenter.setUpdateFilmCardAborting(UserAction.UPDATE_USER_LIST_FILM);
-          }
-        }
-        break;
-      }
-      case UserAction.ADD_COMMENT: {
-        this.#filmDetailsPresenter.setUpdateFilmCard(UserAction.ADD_COMMENT);
-        try {
-          await this.#commentsModel.addComment(updateType, update);
-        } catch(err) {
-          this.#filmDetailsPresenter.setUpdateFilmCardAborting(UserAction.ADD_COMMENT);
-        }
-        break;
-      }
-      case UserAction.DELETE_COMMENT: {
-        this.#filmDetailsPresenter.setDeletingComment(update.commentUpdate.id);
-        try {
-          await this.#commentsModel.deleteComment(updateType, update);
-        } catch(err) {
-          this.#filmDetailsPresenter.setDeletingCommentAborting(update.commentUpdate.id);
-        }
-        break;
-      }
-    }
-
-    this.#uiBlocker.unblock();
-  };
-
-  #onModelEvent = (updateType, data) => {
-    switch (updateType) {
-      case UpdateType.PATCH: {
-        this.#getFilmFromPresenters(data.id).forEach((presenter) => presenter.init(data));
-        if (this.#filmDetailsPresenter) {
-          if (this.#filmDetailsPresenter.film.id === data.id) {
-            this.#filmDetailsPresenter.init(data);
-          }
-        }
-        break;
-      }
-      case UpdateType.MINOR:
-        this.#clearFilmsContainer();
-        this.#renderFilmsContainer();
-        if (this.#filmDetailsPresenter) {
-          if (this.#filmDetailsPresenter.film.id === data.id) {
-            this.#filmDetailsPresenter.init(data);
-          }
-        }
-        break;
-      case UpdateType.MAJOR:
-        this.#clearFilmsContainer({resetRenderedFilmCount: true, resetSortType: true});
-        this.#renderFilmsContainer();
-        if (this.#filmDetailsPresenter) {
-          if (this.#filmDetailsPresenter.film.id === data.id) {
-            this.#filmDetailsPresenter.init(data);
-          }
-        }
-        break;
-      case UpdateType.INIT:
-        this.#isLoading = false;
-        remove(this.#loadingComponent);
-        this.#clearFilmsContainer();
-        this.#renderFilmsContainer();
-        break;
-    }
-  };
-
-  #onModelCommentEvent = (updateType, data) => {
-    switch (updateType) {
-      case UpdateType.PATCH:
-        this.#filmsModel.updateLocalFilm(updateType, data);
-        this.#isRerenderListCommented = true;
-        this.#renderFilmsCommentedList(this.#filmsModel.films);
-        break;
-    }
-  };
-
-  #getFilmFromPresenters = (filmId) => {
-    const filmPresentersFound = [];
-
-    const filmMainPresenterFound = this.#filmMainPresenter.get(filmId);
-    const filmRatedPresenterFound = this.#filmRatedPresenter.get(filmId);
-    const filmCommentedPresenterFound = this.#filmCommentedPresenter.get(filmId);
-
-    if (filmMainPresenterFound) {
-      filmPresentersFound.push(filmMainPresenterFound);
-    }
-
-    if (filmRatedPresenterFound) {
-      filmPresentersFound.push(filmRatedPresenterFound);
-    }
-
-    if (filmCommentedPresenterFound) {
-      filmPresentersFound.push(filmCommentedPresenterFound);
-    }
-
-    return filmPresentersFound;
-  };
-
   #renderShowMoreButton = () => {
     this.#showMoreComponent = new ShowMoreView();
-    this.#showMoreComponent.setOnClick(this.#onShowMoreButtonClick);
+    this.#showMoreComponent.setOnShowMoreClick(this.#onShowMoreButtonClick);
     render(this.#showMoreComponent, this.#filmsListMainComponent.element);
   };
 
@@ -377,6 +240,143 @@ export default class FilmsPresenter {
 
     if (resetSortType) {
       this.#currentSortType = SortType.DEFAULT;
+    }
+  };
+
+  #getFilmFromPresenters = (filmId) => {
+    const filmPresentersFound = [];
+
+    const filmMainPresenterFound = this.#filmMainPresenter.get(filmId);
+    const filmRatedPresenterFound = this.#filmRatedPresenter.get(filmId);
+    const filmCommentedPresenterFound = this.#filmCommentedPresenter.get(filmId);
+
+    if (filmMainPresenterFound) {
+      filmPresentersFound.push(filmMainPresenterFound);
+    }
+
+    if (filmRatedPresenterFound) {
+      filmPresentersFound.push(filmRatedPresenterFound);
+    }
+
+    if (filmCommentedPresenterFound) {
+      filmPresentersFound.push(filmCommentedPresenterFound);
+    }
+
+    return filmPresentersFound;
+  };
+
+  #onShowMoreButtonClick = () => {
+    const filmCount = this.films.length;
+    const newRenderedFilmCount = Math.min(filmCount, this.#renderedFilmCount + FILM_COUNT_PER_STEP);
+    const films = this.films.slice(this.#renderedFilmCount, newRenderedFilmCount);
+
+    this.#renderFilms(films, this.#filmsListMainComponent, this.#filmMainPresenter);
+    this.#renderedFilmCount += FILM_COUNT_PER_STEP;
+
+    if (this.#renderedFilmCount >= this.films.length) {
+      remove(this.#showMoreComponent);
+    }
+  };
+
+  #onModeChangeCard = (film) => {
+    if (this.#filmDetailsPresenter) {
+      this.#filmDetailsPresenter.resetView();
+    }
+    this.#renderFilmDetails(film);
+  };
+
+  #onModeChangeDetailsCard = () => {
+    this.#filmDetailsPresenter = null;
+  };
+
+  #onViewAction = async (actionType, updateType, update) => {
+    this.#uiBlocker.block();
+
+    const filmPresentersFound = this.#getFilmFromPresenters(update.film.id);
+    switch (actionType) {
+      case UserAction.UPDATE_USER_LIST_FILM: {
+        filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCard());
+        if (this.#filmDetailsPresenter) {
+          this.#filmDetailsPresenter.setUpdateFilmCard();
+        }
+        try {
+          await this.#filmsModel.updateFilm(updateType, update.film);
+        } catch(err) {
+          filmPresentersFound.forEach((presenter) => presenter.setUpdateFilmCardAborting());
+          if (this.#filmDetailsPresenter) {
+            this.#filmDetailsPresenter.setUpdateFilmCardAborting(UserAction.UPDATE_USER_LIST_FILM);
+          }
+        }
+        break;
+      }
+      case UserAction.ADD_COMMENT: {
+        this.#filmDetailsPresenter.setUpdateFilmCard(UserAction.ADD_COMMENT);
+        try {
+          await this.#commentsModel.addComment(updateType, update);
+        } catch(err) {
+          this.#filmDetailsPresenter.setUpdateFilmCardAborting(UserAction.ADD_COMMENT);
+        }
+        break;
+      }
+      case UserAction.DELETE_COMMENT: {
+        this.#filmDetailsPresenter.setDeletingComment(update.commentUpdate.id);
+        try {
+          await this.#commentsModel.deleteComment(updateType, update);
+        } catch(err) {
+          this.#filmDetailsPresenter.setDeletingCommentAborting(update.commentUpdate.id);
+        }
+        break;
+      }
+    }
+
+    this.#uiBlocker.unblock();
+  };
+
+  #onModelEvent = (updateType, data) => {
+    switch (updateType) {
+      case UpdateType.PATCH: {
+        this.#getFilmFromPresenters(data.id).forEach((presenter) => presenter.init(data));
+        if (this.#filmDetailsPresenter) {
+          if (this.#filmDetailsPresenter.film.id === data.id) {
+            this.#filmDetailsPresenter.init(data);
+          }
+        }
+        break;
+      }
+      case UpdateType.MINOR:
+        this.#clearFilmsContainer();
+        this.#renderFilmsContainer();
+        if (this.#filmDetailsPresenter) {
+          if (this.#filmDetailsPresenter.film.id === data.id) {
+            this.#filmDetailsPresenter.init(data);
+          }
+        }
+        break;
+      case UpdateType.MAJOR:
+        this.#clearFilmsContainer({resetRenderedFilmCount: true, resetSortType: true});
+        this.#renderFilmsContainer();
+        if (this.#filmDetailsPresenter) {
+          if (this.#filmDetailsPresenter.film.id === data.id) {
+            this.#filmDetailsPresenter.init(data);
+          }
+        }
+        break;
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        remove(this.#loadingComponent);
+        this.#clearFilmsContainer();
+        this.#renderFilmsContainer();
+        break;
+    }
+  };
+
+  #onModelCommentEvent = (updateType, data) => {
+    switch (updateType) {
+      case UpdateType.PATCH:
+        this.#filmsModel.updateLocalFilm(updateType, data);
+        this.#isRerenderListCommented = true;
+        this.#renderFilmsCommentedList(this.#filmsModel.films);
+        break;
     }
   };
 }

@@ -2,9 +2,11 @@ import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 import dayjs from 'dayjs';
 import {converterMinutesToDuration} from '../utils/film.js';
 
+const MAX_TEXT_LENGTH = 140;
+
 const createFilmCardTemplate = (film) => {
   const {comments, filmInfo, userDetails, isDisabled} = film;
-  const description = filmInfo.description.length > 140 ? `${filmInfo.description.slice(0, 139)}...` : filmInfo.description;
+  const description = filmInfo.description.length > MAX_TEXT_LENGTH ? `${filmInfo.description.slice(0, MAX_TEXT_LENGTH - 1)}...` : filmInfo.description;
   const watchlistClassName = userDetails.watchlist ? ' film-card__controls-item--active' : '';
   const alreadyWatchedClassName = userDetails.alreadyWatched ? ' film-card__controls-item--active' : '';
   const favoriteClassName = userDetails.favorite ? ' film-card__controls-item--active' : '';

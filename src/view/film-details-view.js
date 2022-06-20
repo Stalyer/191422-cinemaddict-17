@@ -216,7 +216,7 @@ export default class FilmDetailsView extends AbstractStatefulView {
     this._callback.favoriteClick();
   };
 
-  #onChangeEmoji = (evt) => {
+  #onEmojiChange = (evt) => {
     const currerScrollPosition = this.scrollPosition;
     this.updateElement({...this._state, newComment: {...this._state.newComment, emotion: evt.target.value}});
     this._callback.renderComments();
@@ -235,7 +235,7 @@ export default class FilmDetailsView extends AbstractStatefulView {
   };
 
   #setOnInner = () => {
-    this.element.querySelector('.film-details__emoji-list').addEventListener('change', this.#onChangeEmoji);
+    this.element.querySelector('.film-details__emoji-list').addEventListener('change', this.#onEmojiChange);
     this.element.querySelector('.film-details__comment-input').addEventListener('input', this.#onCommentUserInput);
   };
 

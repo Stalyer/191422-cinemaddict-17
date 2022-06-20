@@ -6,13 +6,13 @@ export default class CommentsModel extends Observable {
   #filmsApiService = null;
   #comments = [];
 
-  get comments() {
-    return this.#comments;
-  }
-
   constructor(filmsApiService) {
     super();
     this.#filmsApiService = filmsApiService;
+  }
+
+  get comments() {
+    return this.#comments;
   }
 
   init = async (filmId) => {

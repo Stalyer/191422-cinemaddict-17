@@ -53,6 +53,19 @@ export default class FilmDetailsPresenter {
     remove(prevFilmDetailsComponent);
   };
 
+  #renderFilmDetailComments = () => {
+    if (this.#isLoadingComments) {
+      return;
+    }
+    this.#commentCardView.clear();
+    this.#comments.forEach((comment) => {
+      const commentCardComponent = new CommentCardView(comment);
+      commentCardComponent.setOnDeleteCommentClick(this.#onDeleteCommentClick);
+      this.#commentCardView.set(comment.id, commentCardComponent);
+      render(commentCardComponent, this.#filmDetailsComponent.commentsContainerNode);
+    });
+  };
+
   #onModelEvent = (updateType) => {
     switch (updateType) {
       case UpdateType.INIT_COMMENTS:
@@ -70,7 +83,7 @@ export default class FilmDetailsPresenter {
     this.#filmDetailsComponent.setOnWatchlistClick(this.#onWatchlistClick);
     this.#filmDetailsComponent.setOnWatchedClick(this.#onWatchedClick);
     this.#filmDetailsComponent.setOnFavoriteClick(this.#onFavoriteClick);
-    this.#filmDetailsComponent.setOnNewCommentSend(this.#onSendNewComment);
+    this.#filmDetailsComponent.setOnNewCommentSend(this.#onNewCommentSend);
     this.#filmDetailsComponent.setOnRenderComment(this.#renderFilmDetailComments);
   };
 
@@ -115,7 +128,7 @@ export default class FilmDetailsPresenter {
     }
   };
 
-  #onSendNewComment = ({comment, emotion}) => {
+  #onNewCommentSend = ({comment, emotion}) => {
     const newComment = {
       comment: comment,
       emotion: emotion ? emotion : 'smile',
@@ -125,31 +138,6 @@ export default class FilmDetailsPresenter {
 
   #onDeleteCommentClick = (commentUpdate) => {
     this.#changeData(UserAction.DELETE_COMMENT, UpdateType.PATCH, {film: this.#film, commentUpdate: commentUpdate});
-  };
-
-  #renderFilmDetailComments = () => {
-    if (this.#isLoadingComments) {
-      return;
-    }
-    this.#commentCardView.clear();
-    this.#comments.forEach((comment) => {
-      const commentCardComponent = new CommentCardView(comment);
-      commentCardComponent.setOnDeleteCommentClick(this.#onDeleteCommentClick);
-      this.#commentCardView.set(comment.id, commentCardComponent);
-      render(commentCardComponent, this.#filmDetailsComponent.commentsContainerNode);
-    });
-  };
-
-  setDeletingComment = (commentId) => {
-    this.#commentCardView.get(commentId).updateElement({isDeleting: true});
-  };
-
-  setDeletingCommentAborting = (commentId) => {
-    const resetCommentState = () => {
-      this.#commentCardView.get(commentId).updateElement({isDeleting: false});
-    };
-
-    this.#commentCardView.get(commentId).shake(resetCommentState);
   };
 
   setUpdateFilmCard = () => {
@@ -170,6 +158,18 @@ export default class FilmDetailsPresenter {
     };
 
     this.#filmDetailsComponent.shake(resetFilmDetailsCardState, shakeNode);
+  };
+
+  setDeletingComment = (commentId) => {
+    this.#commentCardView.get(commentId).updateElement({isDeleting: true});
+  };
+
+  setDeletingCommentAborting = (commentId) => {
+    const resetCommentState = () => {
+      this.#commentCardView.get(commentId).updateElement({isDeleting: false});
+    };
+
+    this.#commentCardView.get(commentId).shake(resetCommentState);
   };
 
   resetView = () => {
