@@ -2,25 +2,25 @@ import AbstractView from '../framework/view/abstract-view.js';
 
 const SECTION_CLASS = {
   common: {
-    titleAdittionClass: ' visually-hidden',
-    sectionAdittionClass: '',
+    titleAdditionClass: ' visually-hidden',
+    sectionAddittionClass: '',
   },
   extra: {
-    titleAdittionClass: '',
-    sectionAdittionClass: ' films-list--extra',
+    titleAdditionClass: '',
+    sectionAddittionClass: ' films-list--extra',
   },
   empty: {
-    titleAdittionClass: '',
-    sectionAdittionClass: '',
+    titleAdditionClass: '',
+    sectionAddittionClass: '',
   }
 };
 
 const createFilmsListTemplate = (sectionSettings) => {
   const {typeSection, title} = sectionSettings;
-  const {titleAdittionClass, sectionAdittionClass} = SECTION_CLASS[typeSection];
+  const {titleAdditionClass, sectionAddittionClass} = SECTION_CLASS[typeSection];
 
-  return `<section class="films-list${sectionAdittionClass}">
-            <h2 class="films-list__title${titleAdittionClass}">${title}</h2>
+  return `<section class="films-list${sectionAddittionClass}">
+            <h2 class="films-list__title${titleAdditionClass}">${title}</h2>
             ${typeSection !== 'empty' ? '<div class="films-list__container"></div>' : ''}
           </section>`;
 };

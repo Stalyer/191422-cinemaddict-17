@@ -1,14 +1,19 @@
 import AbstractView from '../framework/view/abstract-view.js';
 
+const countFilmsToRating = {
+  MIN: 10,
+  MAX: 20
+};
+
 const createProfileTemplate = (filmsWatchedCount) => {
   const createProfileRating = (count) => {
     let ratingName = '';
 
-    if (count <= 10 && count !== 0) {
+    if (count <= countFilmsToRating.MIN && count !== 0) {
       ratingName = '<p class="profile__rating">Novice</p>';
-    } else if (count <= 20) {
+    } else if (count <= countFilmsToRating.MAX) {
       ratingName = '<p class="profile__rating">Fan</p>';
-    } else if (count > 20) {
+    } else if (count > countFilmsToRating.MAX) {
       ratingName = '<p class="profile__rating">movie buff</p>';
     }
 

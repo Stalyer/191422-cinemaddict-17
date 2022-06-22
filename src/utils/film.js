@@ -1,9 +1,10 @@
 import dayjs from 'dayjs';
 
 const converterMinutesToDuration = (time) => {
+  const MINUTES_IN_HOUR = 60;
   let duration = '';
-  const hours = Math.trunc(time / 60);
-  const minutes = time % 60;
+  const hours = Math.trunc(time / MINUTES_IN_HOUR);
+  const minutes = time % MINUTES_IN_HOUR;
   duration += hours ? `${hours}h ` : '';
   duration += minutes ? `${minutes}m` : '';
   return duration;

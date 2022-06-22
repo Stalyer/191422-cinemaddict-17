@@ -21,9 +21,7 @@ export default class FilmsApiService extends ApiService {
       headers: new Headers({'Content-Type': 'application/json'}),
     });
 
-    const parsedResponse = await ApiService.parseResponse(response);
-
-    return parsedResponse;
+    return await ApiService.parseResponse(response);
   };
 
   getFilmComments = async (filmId) => this._load({url: `comments/${filmId}`}).then(ApiService.parseResponse);
@@ -36,19 +34,13 @@ export default class FilmsApiService extends ApiService {
       headers: new Headers({'Content-Type': 'application/json'}),
     });
 
-    const parsedResponse = await ApiService.parseResponse(response);
-
-    return parsedResponse;
+    return await ApiService.parseResponse(response);
   };
 
-  deleteFilmComment = async (commentId) => {
-    const response = await this._load({
-      url: `comments/${commentId}`,
-      method: Method.DELETE,
-    });
-
-    return response;
-  };
+  deleteFilmComment = async (commentId) => await this._load({
+    url: `comments/${commentId}`,
+    method: Method.DELETE,
+  });
 
   #adaptToServer = (film) => {
     const adaptedFilm = {...film,

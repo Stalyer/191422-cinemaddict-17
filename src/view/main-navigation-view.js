@@ -40,7 +40,7 @@ export default class MainNavigationView extends AbstractView {
     return createNavigationTemplate(this.#filters, this.#currentFilterType);
   }
 
-  #onfilterTypeClick = (evt) => {
+  #onFilterTypeClick = (evt) => {
     if (evt.target.tagName === 'A' || evt.target.tagName === 'SPAN') {
       evt.preventDefault();
       const filterType = evt.target.tagName === 'A' ? evt.target.dataset.filterType : evt.target.parentElement.dataset.filterType;
@@ -50,6 +50,6 @@ export default class MainNavigationView extends AbstractView {
 
   setOnFilterTypeClick = (callback) => {
     this._callback.filterTypeClick = callback;
-    this.element.addEventListener('click', this.#onfilterTypeClick);
+    this.element.addEventListener('click', this.#onFilterTypeClick);
   };
 }
